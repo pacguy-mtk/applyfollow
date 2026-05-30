@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZiJun Job Hunt Control Panel</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --bg: #070912;
+      --panel: rgba(13, 17, 31, 0.9);
+      --text: #f4f7ff;
+      --muted: #aab5ce;
+      --faint: #707b95;
+      --line: rgba(255,255,255,.12);
+      --cyan: #42e8d4;
+      --gold: #f8c76c;
+      --green: #69f0ae;
+      --red: #ff6f91;
+      --violet: #8b5cf6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(66,232,212,.14), transparent 30rem),
+        radial-gradient(circle at 88% 12%, rgba(139,92,246,.16), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+
+    .shell {
+      width: min(1240px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 26px 0 42px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      color: #050813;
+      font-weight: 900;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 4vw, 42px);
+      line-height: 1;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0 12px;
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      font-weight: 850;
+    }
+
+    .btn.primary {
+      border-color: rgba(66,232,212,.42);
+      background: rgba(66,232,212,.12);
+      color: var(--cyan);
+    }
+
+    .btn.danger { color: var(--red); }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .metrics {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-bottom: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+      box-shadow: 0 24px 70px rgba(0,0,0,.34);
+      backdrop-filter: blur(16px);
+    }
+
+    .metric {
+      min-height: 96px;
+      padding: 16px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 10px;
+      font-size: clamp(26px, 4vw, 38px);
+      line-height: 1;
+    }
+
+    .main {
+      grid-template-columns: 430px minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .panel-head {
+      padding: 16px 16px 0;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .panel-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    form {
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0 11px;
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 72px;
+      padding-top: 10px;
+      resize: vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(66,232,212,.62);
+      box-shadow: 0 0 0 3px rgba(66,232,212,.08);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .template-card {
+      margin-top: 14px;
+    }
+
+    .template-wrap {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      background: rgba(255,255,255,.035);
+    }
+
+    .ai-template td:first-child {
+      width: 34%;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .copy-box {
+      width: 100%;
+      min-height: 150px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(0,0,0,.2);
+      color: var(--text);
+      white-space: pre-wrap;
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .records-card {
+      overflow: hidden;
+    }
+
+    .tools {
+      padding: 14px 16px;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tools input {
+      max-width: 340px;
+    }
+
+    .table-scroll { overflow-x: auto; }
+    .records-table { min-width: 1100px; }
+
+    .tag {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0 9px;
+      font-size: 11px;
+      font-weight: 900;
+      background: rgba(66,232,212,.12);
+      color: var(--cyan);
+      white-space: nowrap;
+    }
+
+    .Applied { color: var(--cyan); background: rgba(66,232,212,.12); }
+    .NoResponse { color: var(--gold); background: rgba(248,199,108,.12); }
+    .Replied, .Interview, .Interviewed { color: var(--green); background: rgba(105,240,174,.12); }
+    .Rejected { color: var(--red); background: rgba(255,111,145,.12); }
+    .Offer { color: #7aa7ff; background: rgba(122,167,255,.12); }
+
+    .small-btn {
+      min-height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 8px;
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .delete { color: var(--red); }
+
+    .due {
+      color: var(--gold);
+      font-weight: 900;
+    }
+
+    @media (max-width: 980px) {
+      .topbar, .tools {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .metrics, .main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100vw - 22px, 1240px); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">ZJ</div>
+        <div>
+          <h1>Job Hunt Control Panel</h1>
+          <p class="subtitle">Fast record, follow-up reminder, and AI table template.</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="demoBtn" type="button">Load Demo</button>
+        <button class="btn" id="exportBtn" type="button">Export Backup</button>
+        <button class="btn danger" id="clearBtn" type="button">Clear</button>
+      </div>
+    </header>
+
+    <section class="grid metrics">
+      <article class="card metric">
+        <span>Total Applied</span>
+        <strong id="totalApplied">0</strong>
+      </article>
+      <article class="card metric">
+        <span>Need Follow Up</span>
+        <strong id="needFollow">0</strong>
+      </article>
+      <article class="card metric">
+        <span>Interview</span>
+        <strong id="interviewCount">0</strong>
+      </article>
+      <article class="card metric">
+        <span>Offer / Replied</span>
+        <strong id="positiveCount">0</strong>
+      </article>
+    </section>
+
+    <section class="grid main">
+      <aside>
+        <div class="card">
+          <div class="panel-head">
+            <h2>Quick Add Job</h2>
+            <p>Keep it fast. Add the job first, polish the message later.</p>
+          </div>
+          <form id="jobForm">
+            <div class="row">
+              <label>
+                Applied Date
+                <input id="appliedDate" type="date" required>
+              </label>
+              <label>
+                Platform
+                <select id="platform">
+                  <option>JobStreet</option>
+                  <option>LinkedIn</option>
+                  <option>Indeed</option>
+                  <option>Facebook</option>
+                  <option>WhatsApp</option>
+                  <option>Walk-in</option>
+                  <option>Friend Intro</option>
+                  <option>Other</option>
+                </select>
+              </label>
+            </div>
+            <label>
+              Company
+              <input id="company" placeholder="Company name" required>
+            </label>
+            <label>
+              Position
+              <input id="position" placeholder="Graphic designer, admin, sales..." required>
+            </label>
+            <div class="row">
+              <label>
+                Status
+                <select id="status">
+                  <option>Applied</option>
+                  <option>No Response</option>
+                  <option>Replied</option>
+                  <option>Interview</option>
+                  <option>Interviewed</option>
+                  <option>Rejected</option>
+                  <option>Offer</option>
+                </select>
+              </label>
+              <label>
+                Follow Up Date
+                <input id="followDate" type="date" required>
+              </label>
+            </div>
+            <label>
+              WhatsApp Message To Reply
+              <textarea id="whatsapp" placeholder="Paste AI generated WhatsApp message here."></textarea>
+            </label>
+            <label>
+              Interview Questions / Notes
+              <textarea id="interviewAsk" placeholder="Paste AI generated interview questions here."></textarea>
+            </label>
+            <label>
+              Response / Notes
+              <textarea id="response" placeholder="No response yet, HR replied, interview time, etc."></textarea>
+            </label>
+            <button class="btn primary" type="submit">Add Job</button>
+          </form>
+        </div>
+
+        <div class="card template-card">
+          <div class="panel-head">
+            <h2>AI Fill-In Table</h2>
+            <p>Fill the table from selected record, copy, paste into AI, then paste output back.</p>
+          </div>
+          <div class="template-wrap">
+            <table class="ai-template">
+              <tbody>
+                <tr><td>Applied date</td><td id="tplDate">-</td></tr>
+                <tr><td>Company</td><td id="tplCompany">-</td></tr>
+                <tr><td>Position</td><td id="tplPosition">-</td></tr>
+                <tr><td>Platform</td><td id="tplPlatform">-</td></tr>
+                <tr><td>Current status</td><td id="tplStatus">-</td></tr>
+                <tr><td>WhatsApp to ask</td><td id="tplWhatsapp">Please write a short, polite WhatsApp follow-up message.</td></tr>
+                <tr><td>Interview to ask</td><td id="tplInterview">Please write simple interview questions I can ask about job scope, salary, working hours, training, and next step.</td></tr>
+              </tbody>
+            </table>
+            <button class="btn primary" id="copyTemplateBtn" type="button">Copy AI Table Text</button>
+            <div class="copy-box" id="copyBox"></div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="card records-card">
+        <div class="panel-head">
+          <h2>AI Output Parser</h2>
+          <p>Paste the AI response here. It will fill company, position, date, platform, status, WhatsApp, and interview questions.</p>
+        </div>
+        <div class="template-wrap">
+          <textarea id="aiOutput" style="min-height:180px;" placeholder="Paste full AI output here..."></textarea>
+          <div class="actions" style="justify-content:flex-start;">
+            <button class="btn primary" id="parseAiBtn" type="button">Parse AI Output</button>
+            <button class="btn" id="addParsedBtn" type="button">Parse + Add Job</button>
+          </div>
+        </div>
+
+        <div class="tools">
+          <div>
+            <h2 style="margin:0;font-size:20px;">Applied Jobs</h2>
+            <p class="subtitle">Click a row's AI button to fill the template.</p>
+          </div>
+          <input id="search" placeholder="Search company, position, platform...">
+        </div>
+        <div class="table-scroll">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th>Applied</th>
+                <th>Company</th>
+                <th>Position</th>
+                <th>Platform</th>
+                <th>Status</th>
+                <th>Follow Up</th>
+                <th>WhatsApp</th>
+                <th>Interview</th>
+                <th>Response</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="jobsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <script>
+    const storageKey = "zijun-job-hunt";
+    const form = document.getElementById("jobForm");
+    const jobsBody = document.getElementById("jobsBody");
+    const search = document.getElementById("search");
+    let jobs = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+    const demoJobs = [
+      {
+        id: crypto.randomUUID(),
+        appliedDate: "2026-05-31",
+        company: "KH Sign Media",
+        position: "Graphic Designer",
+        platform: "WhatsApp",
+        status: "Applied",
+        followDate: "2026-06-03",
+        whatsapp: "Hi, I would like to follow up on my application for the Graphic Designer position.",
+        interviewAsk: "May I know the daily job scope, working hours, salary range, and training arrangement?",
+        response: "Waiting response."
+      },
+      {
+        id: crypto.randomUUID(),
+        appliedDate: "2026-05-30",
+        company: "Creative Studio",
+        position: "Junior Designer",
+        platform: "JobStreet",
+        status: "No Response",
+        followDate: "2026-06-02",
+        whatsapp: "",
+        interviewAsk: "",
+        response: ""
+      }
+    ];
+
+    setDefaultDates();
+    render();
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      jobs.unshift(getFormData());
+      save();
+      form.reset();
+      setDefaultDates();
+    });
+
+    search.addEventListener("input", render);
+
+    document.getElementById("demoBtn").addEventListener("click", () => {
+      jobs = [...demoJobs];
+      save();
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      if (confirm("Clear all job records on this browser?")) {
+        jobs = [];
+        save();
+      }
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "zijun-job-hunt-backup.json";
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+
+    document.getElementById("copyTemplateBtn").addEventListener("click", async () => {
+      const text = document.getElementById("copyBox").textContent;
+      await navigator.clipboard.writeText(text);
+      document.getElementById("copyTemplateBtn").textContent = "Copied";
+      setTimeout(() => document.getElementById("copyTemplateBtn").textContent = "Copy AI Table Text", 900);
+    });
+
+    document.getElementById("parseAiBtn").addEventListener("click", () => {
+      parseAiOutput(false);
+    });
+
+    document.getElementById("addParsedBtn").addEventListener("click", () => {
+      parseAiOutput(true);
+    });
+
+    function setDefaultDates() {
+      const today = new Date();
+      const follow = new Date();
+      follow.setDate(today.getDate() + 3);
+      document.getElementById("appliedDate").value = toDateInput(today);
+      document.getElementById("followDate").value = toDateInput(follow);
+    }
+
+    function toDateInput(date) {
+      return date.toISOString().slice(0, 10);
+    }
+
+    function getFormData() {
+      return {
+        id: crypto.randomUUID(),
+        appliedDate: document.getElementById("appliedDate").value,
+        company: document.getElementById("company").value.trim(),
+        position: document.getElementById("position").value.trim(),
+        platform: document.getElementById("platform").value,
+        status: document.getElementById("status").value,
+        followDate: document.getElementById("followDate").value,
+        whatsapp: document.getElementById("whatsapp").value.trim(),
+        interviewAsk: document.getElementById("interviewAsk").value.trim(),
+        response: document.getElementById("response").value.trim()
+      };
+    }
+
+    function parseAiOutput(shouldAdd) {
+      const text = document.getElementById("aiOutput").value.trim();
+      if (!text) {
+        alert("Paste AI output first.");
+        return;
+      }
+
+      const parsed = {
+        appliedDate: parseDateFromText(getTableValue(text, "Applied date")),
+        company: getTableValue(text, "Company"),
+        position: getTableValue(text, "Position"),
+        platform: normalizePlatform(getTableValue(text, "Platform")),
+        status: normalizeStatus(getTableValue(text, "Current status")),
+        whatsapp: cleanSection(extractSection(text, [
+          "WhatsApp Follow-Up Message",
+          "WhatsApp Follow Up Message",
+          "WhatsApp Message",
+          "Follow-Up Message",
+          "Follow Up Message"
+        ], [
+          "Interview Questions You Should Ask",
+          "Interview Questions",
+          "Questions You Should Ask"
+        ])),
+        interviewAsk: cleanSection(extractSection(text, [
+          "Interview Questions You Should Ask",
+          "Interview Questions",
+          "Questions You Should Ask"
+        ], []))
+      };
+
+      if (parsed.appliedDate) {
+        document.getElementById("appliedDate").value = parsed.appliedDate;
+        document.getElementById("followDate").value = addDays(parsed.appliedDate, 3);
+      }
+      if (parsed.company) document.getElementById("company").value = parsed.company;
+      if (parsed.position) document.getElementById("position").value = parsed.position;
+      if (parsed.platform) document.getElementById("platform").value = parsed.platform;
+      if (parsed.status) document.getElementById("status").value = parsed.status;
+      if (parsed.whatsapp) document.getElementById("whatsapp").value = parsed.whatsapp;
+      if (parsed.interviewAsk) document.getElementById("interviewAsk").value = parsed.interviewAsk;
+
+      if (shouldAdd) {
+        jobs.unshift(getFormData());
+        save();
+        form.reset();
+        setDefaultDates();
+      }
+    }
+
+    function getTableValue(text, field) {
+      const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const boldPattern = new RegExp(`\\|\\s*\\*\\*${escaped}\\*\\*\\s*\\|\\s*([^|]+?)\\s*\\|`, "i");
+      const plainPattern = new RegExp(`\\|\\s*${escaped}\\s*\\|\\s*([^|]+?)\\s*\\|`, "i");
+      const colonPattern = new RegExp(`${escaped}\\s*:\\s*(.+)`, "i");
+      return (text.match(boldPattern)?.[1] || text.match(plainPattern)?.[1] || text.match(colonPattern)?.[1] || "").trim();
+    }
+
+    function extractSection(text, startHeadings, endHeadings) {
+      const lines = text.split(/\r?\n/);
+      const startIndex = lines.findIndex(line => startHeadings.some(heading => line.toLowerCase().includes(heading.toLowerCase())));
+      if (startIndex === -1) return "";
+
+      let endIndex = lines.length;
+      for (let i = startIndex + 1; i < lines.length; i += 1) {
+        const line = lines[i].toLowerCase();
+        const isNextHeading = /^#{1,4}\s/.test(lines[i]) && !startHeadings.some(heading => line.includes(heading.toLowerCase()));
+        const isNamedEnd = endHeadings.some(heading => line.includes(heading.toLowerCase()));
+        if (isNamedEnd || isNextHeading) {
+          endIndex = i;
+          break;
+        }
+      }
+
+      return lines.slice(startIndex + 1, endIndex).join("\n").trim();
+    }
+
+    function cleanSection(value) {
+      return value
+        .replace(/^[-*_>\s]+$/gm, "")
+        .replace(/^>\s?/gm, "")
+        .replace(/\*\*/g, "")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .trim();
+    }
+
+    function parseDateFromText(value) {
+      if (!value) return "";
+      const iso = value.match(/\d{4}-\d{2}-\d{2}/)?.[0];
+      if (iso) return iso;
+
+      const match = value.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+      if (!match) return "";
+
+      const months = {
+        january: "01", jan: "01",
+        february: "02", feb: "02",
+        march: "03", mar: "03",
+        april: "04", apr: "04",
+        may: "05",
+        june: "06", jun: "06",
+        july: "07", jul: "07",
+        august: "08", aug: "08",
+        september: "09", sep: "09",
+        october: "10", oct: "10",
+        november: "11", nov: "11",
+        december: "12", dec: "12"
+      };
+
+      const day = match[1].padStart(2, "0");
+      const month = months[match[2].toLowerCase()];
+      const year = match[3];
+      return month ? `${year}-${month}-${day}` : "";
+    }
+
+    function addDays(dateString, days) {
+      const date = new Date(`${dateString}T00:00:00`);
+      date.setDate(date.getDate() + days);
+      return toDateInput(date);
+    }
+
+    function normalizePlatform(value) {
+      const platform = value.toLowerCase();
+      const options = [...document.getElementById("platform").options].map(option => option.value);
+      return options.find(option => platform.includes(option.toLowerCase())) || "Other";
+    }
+
+    function normalizeStatus(value) {
+      const status = value.toLowerCase();
+      if (status.includes("offer")) return "Offer";
+      if (status.includes("reject")) return "Rejected";
+      if (status.includes("interviewed")) return "Interviewed";
+      if (status.includes("interview")) return "Interview";
+      if (status.includes("replied") || status.includes("response")) return "Replied";
+      if (status.includes("no response")) return "No Response";
+      return "Applied";
+    }
+
+    function save() {
+      localStorage.setItem(storageKey, JSON.stringify(jobs));
+      render();
+    }
+
+    function render() {
+      const q = search.value.toLowerCase();
+      const visible = jobs.filter(job => [job.company, job.position, job.platform, job.status, job.response].join(" ").toLowerCase().includes(q));
+      const today = toDateInput(new Date());
+
+      document.getElementById("totalApplied").textContent = jobs.length;
+      document.getElementById("needFollow").textContent = jobs.filter(job => job.followDate <= today && !["Rejected", "Offer"].includes(job.status)).length;
+      document.getElementById("interviewCount").textContent = jobs.filter(job => ["Interview", "Interviewed"].includes(job.status)).length;
+      document.getElementById("positiveCount").textContent = jobs.filter(job => ["Replied", "Interview", "Interviewed", "Offer"].includes(job.status)).length;
+
+      jobsBody.innerHTML = visible.map(job => {
+        const statusClass = job.status.replace(/\s/g, "");
+        const dueClass = job.followDate <= today && !["Rejected", "Offer"].includes(job.status) ? "due" : "";
+        return `
+          <tr>
+            <td>${job.appliedDate}</td>
+            <td><strong>${esc(job.company)}</strong></td>
+            <td>${esc(job.position)}</td>
+            <td>${job.platform}</td>
+            <td><span class="tag ${statusClass}">${job.status}</span></td>
+            <td class="${dueClass}">${job.followDate}</td>
+            <td>${esc(short(job.whatsapp))}</td>
+            <td>${esc(short(job.interviewAsk))}</td>
+            <td>${esc(short(job.response))}</td>
+            <td>
+              <button class="small-btn" onclick="selectJob('${job.id}')">AI</button>
+              <button class="small-btn" onclick="markStatus('${job.id}','Replied')">Replied</button>
+              <button class="small-btn" onclick="markStatus('${job.id}','Interview')">Interview</button>
+              <button class="small-btn delete" onclick="removeJob('${job.id}')">X</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      if (jobs[0]) {
+        fillTemplate(jobs[0]);
+      } else {
+        fillTemplate(null);
+      }
+    }
+
+    function selectJob(id) {
+      const job = jobs.find(item => item.id === id);
+      fillTemplate(job);
+    }
+
+    function fillTemplate(job) {
+      const blank = {
+        appliedDate: "-",
+        company: "-",
+        position: "-",
+        platform: "-",
+        status: "-",
+        whatsapp: "Please write a short, polite WhatsApp follow-up message.",
+        interviewAsk: "Please write simple interview questions I can ask about job scope, salary, working hours, training, and next step."
+      };
+      const data = job || blank;
+
+      document.getElementById("tplDate").textContent = data.appliedDate;
+      document.getElementById("tplCompany").textContent = data.company;
+      document.getElementById("tplPosition").textContent = data.position;
+      document.getElementById("tplPlatform").textContent = data.platform;
+      document.getElementById("tplStatus").textContent = data.status;
+      document.getElementById("tplWhatsapp").textContent = data.whatsapp || blank.whatsapp;
+      document.getElementById("tplInterview").textContent = data.interviewAsk || blank.interviewAsk;
+
+      document.getElementById("copyBox").textContent =
+`Help me write job application follow-up content based on this table.
+
+| Field | Fill In |
+|---|---|
+| Applied date | ${data.appliedDate} |
+| Company | ${data.company} |
+| Position | ${data.position} |
+| Platform | ${data.platform} |
+| Current status | ${data.status} |
+
+| Output Needed | Instruction |
+|---|---|
+| WhatsApp follow-up message | Write a short, polite WhatsApp message to follow up on my job application. Keep it friendly, professional, and not too long. |
+| Interview questions I should ask | Give me simple questions I can ask the employer during interview, focused on job scope, salary, working hours, training, and next steps. |`;
+    }
+
+    function markStatus(id, status) {
+      jobs = jobs.map(job => job.id === id ? { ...job, status } : job);
+      save();
+    }
+
+    function removeJob(id) {
+      jobs = jobs.filter(job => job.id !== id);
+      save();
+    }
+
+    function short(value) {
+      if (!value) return "-";
+      return value.length > 58 ? `${value.slice(0, 58)}...` : value;
+    }
+
+    function esc(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[char]);
+    }
+  </script>
+</body>
+</html>
