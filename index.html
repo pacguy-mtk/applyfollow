@@ -474,11 +474,11 @@
 
 | Field | Fill In |
 |---|---|
-| Applied date | --- |
-| Company | --- |
-| Position | --- |
-| Platform | --- |
-| Current status | --- |
+| Applied date | 2026-05-30 |
+| Company | INFLUASIA (World of Buzz / Lobak Merah / NOODOU) |
+| Position | Graphic Designer cum Video Editor |
+| Platform | JobStreet |
+| Current status | Applied |
 
 | Output Needed | Instruction |
 |---|---|
@@ -586,7 +586,7 @@
         position: job.position || "",
         platform: platformOptions.includes(job.platform) ? job.platform : "Other",
         status: statusOptions.includes(job.status) ? job.status : "Applied",
-        followDate: job.followDate || addDays(job.appliedDate || toDateInput(new Date()), 3),
+        followDate: job.followDate || addWorkingDays(job.appliedDate || toDateInput(new Date()), 3),
         whatsapp: job.whatsapp || "",
         interviewAsk: job.interviewAsk || "",
         response: job.response || "",
@@ -742,8 +742,8 @@
       if (!text) return alert("Paste AI output first.");
       const parsed = {
         appliedDate: parseDateFromText(getTableValue(text, "Applied date")),
-        company: getTableValue(text, "Company"),
-        position: getTableValue(text, "Position"),
+        company: withWorkMode(getTableValue(text, "Company"), text),
+        position: improvePosition(getTableValue(text, "Position"), text),
         platform: normalizePlatform(getTableValue(text, "Platform")),
         status: normalizeStatus(getTableValue(text, "Current status")),
         whatsapp: cleanSection(extractSection(text, ["WhatsApp Follow-Up Message", "WhatsApp Follow Up Message", "WhatsApp Message", "Follow-Up Message", "Follow Up Message"], ["Interview Questions You Should Ask", "Interview Questions", "Questions You Should Ask"])),
@@ -751,7 +751,7 @@
       };
       if (parsed.appliedDate) {
         document.getElementById("appliedDate").value = parsed.appliedDate;
-        document.getElementById("followDate").value = addDays(parsed.appliedDate, 3);
+        document.getElementById("followDate").value = addWorkingDays(parsed.appliedDate, 3);
       }
       if (parsed.company) document.getElementById("company").value = parsed.company;
       if (parsed.position) document.getElementById("position").value = parsed.position;
@@ -803,10 +803,35 @@
       const months = { january:"01",jan:"01",february:"02",feb:"02",march:"03",mar:"03",april:"04",apr:"04",may:"05",june:"06",jun:"06",july:"07",jul:"07",august:"08",aug:"08",september:"09",sep:"09",october:"10",oct:"10",november:"11",nov:"11",december:"12",dec:"12" };
       return months[match[2].toLowerCase()] ? `${match[3]}-${months[match[2].toLowerCase()]}-${match[1].padStart(2,"0")}` : "";
     }
-    function addDays(dateString, days) {
+    function addWorkingDays(dateString, days) {
       const date = new Date(`${dateString}T00:00:00`);
-      date.setDate(date.getDate() + days);
+      let added = 0;
+      while (added < days) {
+        date.setDate(date.getDate() + 1);
+        const day = date.getDay();
+        if (day !== 0 && day !== 6) added += 1;
+      }
       return toDateInput(date);
+    }
+    function withWorkMode(company, text) {
+      const lower = text.toLowerCase();
+      const modes = [];
+      if (lower.includes("hybrid")) modes.push("Hybrid");
+      if (lower.includes("remote") || lower.includes("work from home") || lower.includes("wfh")) modes.push("Remote");
+      if (!company || !modes.length || modes.some(mode => company.toLowerCase().includes(mode.toLowerCase()))) return company;
+      return `${company} - ${modes.join(" / ")}`;
+    }
+    function improvePosition(position, text) {
+      const candidates = [
+        "Graphic Designer cum Video Editor cum Marketing",
+        "Graphic Designer cum Video Editor",
+        "Multimedia Designer / Graphic Designer",
+        "Internal Graphic Designer",
+        "Junior Designer",
+        "Graphic Designer"
+      ];
+      const found = candidates.find(candidate => text.toLowerCase().includes(candidate.toLowerCase()));
+      return found && found.length > String(position || "").length ? found : position;
     }
     function normalizePlatform(value) {
       const platform = String(value || "").toLowerCase();
@@ -816,6 +841,7 @@
       const status = String(value || "").toLowerCase();
       if (status.includes("offer")) return "Offer";
       if (status.includes("reject")) return "Rejected";
+      if (status.includes("applied")) return "Applied";
       if (status.includes("interviewed")) return "Interviewed";
       if (status.includes("interview")) return "Interview";
       if (status.includes("no response")) return "No Response";
