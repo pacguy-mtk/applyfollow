@@ -19,29 +19,27 @@
       --green: #69f0ae;
       --red: #ff6f91;
       --violet: #8b5cf6;
+      --blue: #7aa7ff;
     }
 
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       min-height: 100vh;
       background:
-        radial-gradient(circle at 20% 0%, rgba(66,232,212,.14), transparent 30rem),
-        radial-gradient(circle at 88% 12%, rgba(139,92,246,.16), transparent 30rem),
+        radial-gradient(circle at 18% 0%, rgba(66,232,212,.14), transparent 30rem),
+        radial-gradient(circle at 88% 10%, rgba(139,92,246,.16), transparent 32rem),
         var(--bg);
       color: var(--text);
     }
-
     button, input, select, textarea { font: inherit; }
     button { cursor: pointer; }
 
     .shell {
-      width: min(1240px, calc(100vw - 28px));
+      width: min(1260px, calc(100vw - 28px));
       margin: 0 auto;
-      padding: 26px 0 42px;
+      padding: 26px 0 44px;
     }
-
     .topbar {
       display: flex;
       align-items: center;
@@ -49,13 +47,7 @@
       gap: 14px;
       margin-bottom: 16px;
     }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
+    .brand { display: flex; align-items: center; gap: 12px; }
     .mark {
       width: 44px;
       height: 44px;
@@ -66,26 +58,9 @@
       color: #050813;
       font-weight: 900;
     }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(26px, 4vw, 42px);
-      line-height: 1;
-    }
-
-    .subtitle {
-      margin: 5px 0 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: flex-end;
-    }
-
+    h1 { margin: 0; font-size: clamp(26px, 4vw, 42px); line-height: 1; }
+    .subtitle { margin: 5px 0 0; color: var(--muted); font-size: 14px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
     .btn {
       min-height: 40px;
       border: 1px solid var(--line);
@@ -95,25 +70,45 @@
       color: var(--text);
       font-weight: 850;
     }
-
-    .btn.primary {
-      border-color: rgba(66,232,212,.42);
-      background: rgba(66,232,212,.12);
-      color: var(--cyan);
-    }
-
+    .btn.primary { border-color: rgba(66,232,212,.42); background: rgba(66,232,212,.12); color: var(--cyan); }
     .btn.danger { color: var(--red); }
-
-    .grid {
-      display: grid;
-      gap: 14px;
+    .small-btn {
+      min-height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 8px;
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 850;
     }
+    .delete { color: var(--red); }
 
-    .metrics {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      margin-bottom: 14px;
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin: 14px 0;
+      padding: 6px;
+      width: fit-content;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
     }
+    .tab-btn, .mode-btn {
+      min-height: 42px;
+      border: 0;
+      border-radius: 10px;
+      padding: 0 18px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 900;
+    }
+    .tab-btn.active, .mode-btn.active { background: rgba(66,232,212,.14); color: var(--cyan); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
+    .grid { display: grid; gap: 14px; }
+    .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 14px; }
     .card {
       border: 1px solid var(--line);
       border-radius: 14px;
@@ -121,64 +116,14 @@
       box-shadow: 0 24px 70px rgba(0,0,0,.34);
       backdrop-filter: blur(16px);
     }
+    .metric { min-height: 96px; padding: 16px; }
+    .metric span { color: var(--muted); font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .metric strong { display: block; margin-top: 10px; font-size: clamp(26px, 4vw, 38px); line-height: 1; }
 
-    .metric {
-      min-height: 96px;
-      padding: 16px;
-    }
-
-    .metric span {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    .metric strong {
-      display: block;
-      margin-top: 10px;
-      font-size: clamp(26px, 4vw, 38px);
-      line-height: 1;
-    }
-
-    .main {
-      grid-template-columns: 430px minmax(0, 1fr);
-      align-items: start;
-    }
-
-    .panel-head {
-      padding: 16px 16px 0;
-    }
-
-    .panel-head h2 {
-      margin: 0;
-      font-size: 20px;
-    }
-
-    .panel-head p {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    form {
-      padding: 16px;
-      display: grid;
-      gap: 10px;
-    }
-
-    label {
-      display: grid;
-      gap: 6px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-    }
-
+    .panel-head { padding: 16px 16px 0; }
+    .panel-head h2 { margin: 0; font-size: 20px; }
+    .panel-head p { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
     input, select, textarea {
       width: 100%;
       min-height: 40px;
@@ -189,93 +134,98 @@
       color: var(--text);
       outline: none;
     }
+    textarea { min-height: 72px; padding-top: 10px; resize: vertical; line-height: 1.45; }
+    input:focus, select:focus, textarea:focus { border-color: rgba(66,232,212,.62); box-shadow: 0 0 0 3px rgba(66,232,212,.08); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-    textarea {
-      min-height: 72px;
-      padding-top: 10px;
-      resize: vertical;
+    .entry-tools {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
     }
-
-    input:focus, select:focus, textarea:focus {
-      border-color: rgba(66,232,212,.62);
-      box-shadow: 0 0 0 3px rgba(66,232,212,.08);
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    .entry-tools .row { width: min(560px, 100%); }
+    .scroll-hint {
+      display: flex;
+      justify-content: space-between;
       gap: 10px;
+      padding: 9px 12px;
+      color: var(--faint);
+      font-size: 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.025);
     }
-
-    .template-card {
-      margin-top: 14px;
+    .table-scroll {
+      overflow: auto;
+      max-height: calc(100vh - 310px);
+      scrollbar-color: var(--cyan) rgba(255,255,255,.08);
+      scrollbar-width: thin;
     }
-
-    .template-wrap {
-      padding: 16px;
-      display: grid;
-      gap: 12px;
-    }
-
-    table {
+    .entry-table, .workspace-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
+      font-size: 14px;
     }
-
+    .entry-table { min-width: 1540px; }
+    .workspace-table { min-width: 1120px; font-size: 13px; }
     th, td {
+      padding: 12px 13px;
       border-bottom: 1px solid rgba(255,255,255,.08);
-      padding: 11px 12px;
       text-align: left;
       vertical-align: top;
     }
-
     th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
       color: var(--muted);
       font-size: 11px;
       letter-spacing: .06em;
       text-transform: uppercase;
-      background: rgba(255,255,255,.035);
+      background: #101525;
     }
-
-    .ai-template td:first-child {
-      width: 34%;
-      color: var(--muted);
-      font-weight: 900;
-    }
-
-    .copy-box {
-      width: 100%;
-      min-height: 150px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      background: rgba(0,0,0,.2);
-      color: var(--text);
-      white-space: pre-wrap;
+    .entry-table td { line-height: 1.45; }
+    .entry-table textarea { min-width: 230px; min-height: 76px; font-size: 13px; }
+    .entry-table input, .entry-table select { min-width: 130px; min-height: 36px; font-size: 13px; }
+    .text-cell {
+      max-width: 300px;
+      white-space: normal;
       line-height: 1.45;
-      font-size: 13px;
     }
-
-    .records-card {
+    .clip { max-height: 86px; overflow: auto; color: var(--muted); }
+    .company { min-width: 240px; }
+    .position { min-width: 230px; }
+    .map-cell { min-width: 150px; }
+    .travel-thumb {
+      width: 132px;
+      height: 78px;
+      border: 1px dashed rgba(66,232,212,.3);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
       overflow: hidden;
+      color: var(--faint);
+      background: rgba(255,255,255,.035);
+      cursor: pointer;
+      font-size: 12px;
     }
-
-    .tools {
-      padding: 14px 16px;
-      display: flex;
-      gap: 10px;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--line);
+    .travel-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .paste-zone {
+      margin-top: 8px;
+      border: 1px dashed rgba(66,232,212,.34);
+      border-radius: 10px;
+      padding: 8px;
+      color: var(--muted);
+      background: rgba(66,232,212,.045);
+      font-size: 12px;
+      line-height: 1.35;
     }
-
-    .tools input {
-      max-width: 340px;
-    }
-
-    .table-scroll { overflow-x: auto; }
-    .records-table { min-width: 1100px; }
+    .paste-zone:focus { outline: none; border-color: rgba(66,232,212,.72); }
 
     .tag {
       display: inline-flex;
@@ -289,45 +239,50 @@
       color: var(--cyan);
       white-space: nowrap;
     }
-
     .Applied { color: var(--cyan); background: rgba(66,232,212,.12); }
     .NoResponse { color: var(--gold); background: rgba(248,199,108,.12); }
     .Replied, .Interview, .Interviewed { color: var(--green); background: rgba(105,240,174,.12); }
     .Rejected { color: var(--red); background: rgba(255,111,145,.12); }
-    .Offer { color: #7aa7ff; background: rgba(122,167,255,.12); }
+    .Offer { color: var(--blue); background: rgba(122,167,255,.12); }
+    .due { color: var(--gold); font-weight: 900; }
 
-    .small-btn {
-      min-height: 30px;
+    .workspace-grid { display: grid; grid-template-columns: 430px minmax(0, 1fr); gap: 14px; align-items: start; }
+    form, .stack { padding: 16px; display: grid; gap: 10px; }
+    .template-card { margin-top: 14px; }
+    .copy-box {
+      min-height: 170px;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 0 8px;
-      background: rgba(255,255,255,.04);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(0,0,0,.2);
       color: var(--text);
-      font-size: 12px;
-      font-weight: 850;
+      white-space: pre-wrap;
+      line-height: 1.45;
+      font-size: 13px;
+      overflow: auto;
     }
-
-    .delete { color: var(--red); }
-
-    .due {
-      color: var(--gold);
-      font-weight: 900;
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      place-items: center;
+      padding: 22px;
+      background: rgba(0,0,0,.72);
     }
+    .modal.open { display: grid; }
+    .modal img { max-width: min(960px, 96vw); max-height: 86vh; border-radius: 14px; }
+    .empty { padding: 34px 16px; text-align: center; color: var(--muted); }
 
     @media (max-width: 980px) {
-      .topbar, .tools {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .metrics, .main {
-        grid-template-columns: 1fr;
-      }
+      .topbar, .entry-tools { align-items: flex-start; flex-direction: column; }
+      .metrics, .workspace-grid { grid-template-columns: 1fr; }
     }
-
-    @media (max-width: 560px) {
-      .shell { width: min(100vw - 22px, 1240px); }
+    @media (max-width: 620px) {
+      .shell { width: min(100vw - 22px, 1260px); }
       .row { grid-template-columns: 1fr; }
+      .tabs { width: 100%; }
+      .tab-btn, .mode-btn { flex: 1; }
     }
   </style>
 </head>
@@ -338,228 +293,244 @@
         <div class="mark">ZJ</div>
         <div>
           <h1>Job Hunt Control Panel</h1>
-          <p class="subtitle">Fast record, follow-up reminder, and AI table template.</p>
+          <p class="subtitle">Entry for table viewing. Workspace for fast adding, parsing, and follow-up work.</p>
         </div>
       </div>
       <div class="actions">
-        <button class="btn" id="demoBtn" type="button">Load Demo</button>
+        <button class="btn" id="importBtn" type="button">Import Backup</button>
         <button class="btn" id="exportBtn" type="button">Export Backup</button>
-        <button class="btn danger" id="clearBtn" type="button">Clear</button>
+        <input id="importFile" type="file" accept="application/json,.json" hidden>
       </div>
     </header>
 
     <section class="grid metrics">
-      <article class="card metric">
-        <span>Total Applied</span>
-        <strong id="totalApplied">0</strong>
-      </article>
-      <article class="card metric">
-        <span>Need Follow Up</span>
-        <strong id="needFollow">0</strong>
-      </article>
-      <article class="card metric">
-        <span>Interview</span>
-        <strong id="interviewCount">0</strong>
-      </article>
-      <article class="card metric">
-        <span>Offer / Replied</span>
-        <strong id="positiveCount">0</strong>
-      </article>
+      <article class="card metric"><span>Total Applied</span><strong id="totalApplied">0</strong></article>
+      <article class="card metric"><span>Need Follow Up</span><strong id="needFollow">0</strong></article>
+      <article class="card metric"><span>Interview</span><strong id="interviewCount">0</strong></article>
+      <article class="card metric"><span>Offer / Replied</span><strong id="positiveCount">0</strong></article>
     </section>
 
-    <section class="grid main">
-      <aside>
-        <div class="card">
-          <div class="panel-head">
-            <h2>Quick Add Job</h2>
-            <p>Keep it fast. Add the job first, polish the message later.</p>
-          </div>
-          <form id="jobForm">
-            <div class="row">
-              <label>
-                Applied Date
-                <input id="appliedDate" type="date" required>
-              </label>
-              <label>
-                Platform
-                <select id="platform">
-                  <option>JobStreet</option>
-                  <option>LinkedIn</option>
-                  <option>Indeed</option>
-                  <option>Facebook</option>
-                  <option>WhatsApp</option>
-                  <option>Walk-in</option>
-                  <option>Friend Intro</option>
-                  <option>Other</option>
-                </select>
-              </label>
-            </div>
-            <label>
-              Company
-              <input id="company" placeholder="Company name" required>
-            </label>
-            <label>
-              Position
-              <input id="position" placeholder="Graphic designer, admin, sales..." required>
-            </label>
-            <div class="row">
-              <label>
-                Status
-                <select id="status">
-                  <option>Applied</option>
-                  <option>No Response</option>
-                  <option>Replied</option>
-                  <option>Interview</option>
-                  <option>Interviewed</option>
-                  <option>Rejected</option>
-                  <option>Offer</option>
-                </select>
-              </label>
-              <label>
-                Follow Up Date
-                <input id="followDate" type="date" required>
-              </label>
-            </div>
-            <label>
-              WhatsApp Message To Reply
-              <textarea id="whatsapp" placeholder="Paste AI generated WhatsApp message here."></textarea>
-            </label>
-            <label>
-              Interview Questions / Notes
-              <textarea id="interviewAsk" placeholder="Paste AI generated interview questions here."></textarea>
-            </label>
-            <label>
-              Response / Notes
-              <textarea id="response" placeholder="No response yet, HR replied, interview time, etc."></textarea>
-            </label>
-            <button class="btn primary" type="submit">Add Job</button>
-          </form>
-        </div>
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" type="button" data-tab="entry">Entry</button>
+      <button class="tab-btn" type="button" data-tab="workspace">Workspace</button>
+    </div>
 
-        <div class="card template-card">
-          <div class="panel-head">
-            <h2>AI Fill-In Table</h2>
-            <p>Fill the table from selected record, copy, paste into AI, then paste output back.</p>
-          </div>
-          <div class="template-wrap">
-            <table class="ai-template">
-              <tbody>
-                <tr><td>Applied date</td><td id="tplDate">-</td></tr>
-                <tr><td>Company</td><td id="tplCompany">-</td></tr>
-                <tr><td>Position</td><td id="tplPosition">-</td></tr>
-                <tr><td>Platform</td><td id="tplPlatform">-</td></tr>
-                <tr><td>Current status</td><td id="tplStatus">-</td></tr>
-                <tr><td>WhatsApp to ask</td><td id="tplWhatsapp">Please write a short, polite WhatsApp follow-up message.</td></tr>
-                <tr><td>Interview to ask</td><td id="tplInterview">Please write simple interview questions I can ask about job scope, salary, working hours, training, and next step.</td></tr>
-              </tbody>
-            </table>
-            <button class="btn primary" id="copyTemplateBtn" type="button">Copy AI Table Text</button>
-            <div class="copy-box" id="copyBox"></div>
-          </div>
-        </div>
-      </aside>
-
-      <section class="card records-card">
-        <div class="panel-head">
-          <h2>AI Output Parser</h2>
-          <p>Paste the AI response here. It will fill company, position, date, platform, status, WhatsApp, and interview questions.</p>
-        </div>
-        <div class="template-wrap">
-          <textarea id="aiOutput" style="min-height:180px;" placeholder="Paste full AI output here..."></textarea>
-          <div class="actions" style="justify-content:flex-start;">
-            <button class="btn primary" id="parseAiBtn" type="button">Parse AI Output</button>
-            <button class="btn" id="addParsedBtn" type="button">Parse + Add Job</button>
-          </div>
-        </div>
-
-        <div class="tools">
+    <main>
+      <section class="tab-panel active" id="entryPanel">
+        <div class="card entry-tools">
           <div>
-            <h2 style="margin:0;font-size:20px;">Applied Jobs</h2>
-            <p class="subtitle">Click a row's AI button to fill the template.</p>
+            <h2 style="margin:0;">Applied Jobs</h2>
+            <p class="subtitle">Table listing, upgraded. Preview is easier to read; Editor unlocks useful fields.</p>
           </div>
-          <input id="search" placeholder="Search company, position, platform...">
+          <div class="row">
+            <label>Sort Entry
+              <select id="entrySort">
+                <option value="appliedDesc">Newest applied date</option>
+                <option value="status">Status</option>
+                <option value="followDate">Follow-up date</option>
+              </select>
+            </label>
+            <label>Search
+              <input id="entrySearch" placeholder="Company, position, platform...">
+            </label>
+          </div>
+          <div class="tabs" style="margin:0;">
+            <button class="mode-btn active" type="button" data-mode="preview">Preview</button>
+            <button class="mode-btn" type="button" data-mode="edit">Editor</button>
+          </div>
         </div>
-        <div class="table-scroll">
-          <table class="records-table">
-            <thead>
-              <tr>
-                <th>Applied</th>
-                <th>Company</th>
-                <th>Position</th>
-                <th>Platform</th>
-                <th>Status</th>
-                <th>Follow Up</th>
-                <th>WhatsApp</th>
-                <th>Interview</th>
-                <th>Response</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="jobsBody"></tbody>
-          </table>
+
+        <section class="card">
+          <div class="scroll-hint">
+            <span>Scroll inside this table. Header stays visible.</span>
+            <span>Shift + mouse wheel can help horizontal scroll.</span>
+          </div>
+          <div class="table-scroll">
+            <table class="entry-table">
+              <thead>
+                <tr>
+                  <th>Applied</th>
+                  <th>Company</th>
+                  <th>Position</th>
+                  <th>Platform</th>
+                  <th>Status</th>
+                  <th>Follow Up</th>
+                  <th>WhatsApp</th>
+                  <th>Interview</th>
+                  <th>Response</th>
+                  <th>Map</th>
+                  <th>Travel Note</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="entryBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-panel" id="workspacePanel">
+        <div class="workspace-grid">
+          <aside>
+            <section class="card">
+              <div class="panel-head">
+                <h2>Quick Add Job</h2>
+                <p>Add first. Polish later. Applied date and follow-up date auto-fill.</p>
+              </div>
+              <form id="jobForm">
+                <div class="row">
+                  <label>Applied Date<input id="appliedDate" type="date" required></label>
+                  <label>Platform
+                    <select id="platform">
+                      <option>JobStreet</option><option>LinkedIn</option><option>Indeed</option><option>Facebook</option>
+                      <option>WhatsApp</option><option>Walk-in</option><option>Friend Intro</option><option>Other</option>
+                    </select>
+                  </label>
+                </div>
+                <label>Company<input id="company" placeholder="Company name" required></label>
+                <label>Position<input id="position" placeholder="Graphic designer, admin, sales..." required></label>
+                <div class="row">
+                  <label>Status
+                    <select id="status">
+                      <option>Applied</option><option>No Response</option><option>Replied</option><option>Interview</option>
+                      <option>Interviewed</option><option>Rejected</option><option>Offer</option>
+                    </select>
+                  </label>
+                  <label>Follow Up Date<input id="followDate" type="date" required></label>
+                </div>
+                <label>WhatsApp Message To Reply<textarea id="whatsapp" placeholder="Paste AI generated WhatsApp message here."></textarea></label>
+                <label>Interview Questions / Notes<textarea id="interviewAsk" placeholder="Paste AI generated interview questions here."></textarea></label>
+                <label>Response / Notes<textarea id="response" placeholder="No response yet, HR replied, interview time, etc."></textarea></label>
+                <label>Travel Map Image<input id="travelImage" type="file" accept="image/*"></label>
+                <div class="paste-zone" id="travelPasteZone" tabindex="0">Click here and paste map screenshot from clipboard.</div>
+                <label>Travel Note<textarea id="travelNote" placeholder="Distance, transport, parking, too far, acceptable if hybrid..."></textarea></label>
+                <button class="btn primary" type="submit">Add Job</button>
+              </form>
+            </section>
+
+            <section class="card template-card">
+              <div class="panel-head">
+                <h2>Copy Template</h2>
+                <p>Fixed template. Copy, paste to AI, then paste AI output into parser.</p>
+              </div>
+              <div class="stack">
+                <button class="btn primary" id="copyTemplateBtn" type="button">Copy Template</button>
+                <div class="copy-box" id="copyBox"></div>
+              </div>
+            </section>
+          </aside>
+
+          <section class="grid">
+            <section class="card">
+              <div class="panel-head">
+                <h2>AI Output Parser</h2>
+                <p>Paste AI response. It fills date, company, position, platform, status, WhatsApp, and interview questions.</p>
+              </div>
+              <div class="stack">
+                <textarea id="aiOutput" style="min-height:180px;" placeholder="Paste full AI output here..."></textarea>
+                <div class="actions" style="justify-content:flex-start;">
+                  <button class="btn primary" id="parseAiBtn" type="button">Parse AI Output</button>
+                  <button class="btn" id="addParsedBtn" type="button">Parse + Add Job</button>
+                  <button class="btn" id="clearParserBtn" type="button">Clear Parser</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="panel-head">
+                <h2>Workspace Recent Entries</h2>
+                <p>Newest added first. Same useful listing style for quick edits.</p>
+              </div>
+              <div class="table-scroll" style="max-height:460px;">
+                <table class="workspace-table">
+                  <thead>
+                    <tr><th>Applied</th><th>Company</th><th>Position</th><th>Platform</th><th>Status</th><th>Follow Up</th><th>Response</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody id="workspaceBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="stack">
+                <button class="btn danger" id="resetBtn" type="button">Reset All Local Data</button>
+              </div>
+            </section>
+          </section>
         </div>
       </section>
-    </section>
+    </main>
+  </div>
+
+  <div class="modal" id="imageModal" onclick="closeImageModal()">
+    <img id="modalImage" alt="Travel map preview">
   </div>
 
   <script>
     const storageKey = "zijun-job-hunt";
-    const form = document.getElementById("jobForm");
-    const jobsBody = document.getElementById("jobsBody");
-    const search = document.getElementById("search");
-    let jobs = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    const statusOptions = ["Applied", "No Response", "Replied", "Interview", "Interviewed", "Rejected", "Offer"];
+    const platformOptions = ["JobStreet", "LinkedIn", "Indeed", "Facebook", "WhatsApp", "Walk-in", "Friend Intro", "Other"];
+    const fixedTemplate = `Help me write job application follow-up content based on this table.
 
-    const demoJobs = [
-      {
-        id: crypto.randomUUID(),
-        appliedDate: "2026-05-31",
-        company: "KH Sign Media",
-        position: "Graphic Designer",
-        platform: "WhatsApp",
-        status: "Applied",
-        followDate: "2026-06-03",
-        whatsapp: "Hi, I would like to follow up on my application for the Graphic Designer position.",
-        interviewAsk: "May I know the daily job scope, working hours, salary range, and training arrangement?",
-        response: "Waiting response."
-      },
-      {
-        id: crypto.randomUUID(),
-        appliedDate: "2026-05-30",
-        company: "Creative Studio",
-        position: "Junior Designer",
-        platform: "JobStreet",
-        status: "No Response",
-        followDate: "2026-06-02",
-        whatsapp: "",
-        interviewAsk: "",
-        response: ""
-      }
-    ];
+| Field | Fill In |
+|---|---|
+| Applied date | 2026-05-30 |
+| Company | INFLUASIA (World of Buzz / Lobak Merah / NOODOU) |
+| Position | Graphic Designer cum Video Editor |
+| Platform | JobStreet |
+| Current status | Applied |
+
+| Output Needed | Instruction |
+|---|---|
+| WhatsApp follow-up message | Write a short, polite WhatsApp message to follow up on my job application. Keep it friendly, professional, and not too long. |
+| Interview questions I should ask | Give me simple questions I can ask the employer during interview, focused on job scope, salary, working hours, training, and next steps. |`;
+
+    const form = document.getElementById("jobForm");
+    const entryBody = document.getElementById("entryBody");
+    const workspaceBody = document.getElementById("workspaceBody");
+    let jobs = JSON.parse(localStorage.getItem(storageKey) || "[]").map(normalizeJob);
+    let entryMode = "preview";
+    let pendingTravelImage = "";
 
     setDefaultDates();
+    document.getElementById("copyBox").textContent = fixedTemplate;
     render();
 
-    form.addEventListener("submit", (event) => {
+    document.querySelectorAll(".tab-btn").forEach(button => button.addEventListener("click", () => switchTab(button.dataset.tab)));
+    document.querySelectorAll(".mode-btn").forEach(button => button.addEventListener("click", () => switchMode(button.dataset.mode)));
+    document.getElementById("entrySort").addEventListener("change", render);
+    document.getElementById("entrySearch").addEventListener("input", render);
+
+    document.getElementById("travelImage").addEventListener("change", async event => {
+      const file = event.target.files[0];
+      pendingTravelImage = file ? await compressImage(file) : "";
+      updatePasteZone();
+    });
+    document.getElementById("travelPasteZone").addEventListener("paste", async event => {
+      const file = [...event.clipboardData.items].find(item => item.type.startsWith("image/"))?.getAsFile();
+      if (!file) return;
+      event.preventDefault();
+      pendingTravelImage = await compressImage(file);
+      updatePasteZone();
+    });
+
+    form.addEventListener("submit", event => {
       event.preventDefault();
       jobs.unshift(getFormData());
       save();
       form.reset();
+      pendingTravelImage = "";
+      updatePasteZone();
       setDefaultDates();
     });
 
-    search.addEventListener("input", render);
-
-    document.getElementById("demoBtn").addEventListener("click", () => {
-      jobs = [...demoJobs];
-      save();
+    document.getElementById("copyTemplateBtn").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(fixedTemplate);
+      flashButton("copyTemplateBtn", "Copied");
     });
-
-    document.getElementById("clearBtn").addEventListener("click", () => {
-      if (confirm("Clear all job records on this browser?")) {
-        jobs = [];
-        save();
-      }
-    });
+    document.getElementById("parseAiBtn").addEventListener("click", () => parseAiOutput(false));
+    document.getElementById("addParsedBtn").addEventListener("click", () => parseAiOutput(true));
+    document.getElementById("clearParserBtn").addEventListener("click", () => document.getElementById("aiOutput").value = "");
 
     document.getElementById("exportBtn").addEventListener("click", () => {
       const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: "application/json" });
@@ -569,22 +540,35 @@
       link.click();
       URL.revokeObjectURL(link.href);
     });
-
-    document.getElementById("copyTemplateBtn").addEventListener("click", async () => {
-      const text = document.getElementById("copyBox").textContent;
-      await navigator.clipboard.writeText(text);
-      document.getElementById("copyTemplateBtn").textContent = "Copied";
-      setTimeout(() => document.getElementById("copyTemplateBtn").textContent = "Copy AI Table Text", 900);
+    document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+    document.getElementById("importFile").addEventListener("change", async event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const imported = JSON.parse(await file.text());
+      if (!Array.isArray(imported)) return alert("Backup file is not a valid job list.");
+      if (confirm("Import backup and replace current local records?")) {
+        jobs = imported.map(normalizeJob);
+        save();
+      }
+      event.target.value = "";
+    });
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (confirm("Reset all local job records?")) {
+        jobs = [];
+        save();
+      }
     });
 
-    document.getElementById("parseAiBtn").addEventListener("click", () => {
-      parseAiOutput(false);
-    });
-
-    document.getElementById("addParsedBtn").addEventListener("click", () => {
-      parseAiOutput(true);
-    });
-
+    function switchTab(tab) {
+      document.querySelectorAll(".tab-btn").forEach(button => button.classList.toggle("active", button.dataset.tab === tab));
+      document.getElementById("entryPanel").classList.toggle("active", tab === "entry");
+      document.getElementById("workspacePanel").classList.toggle("active", tab === "workspace");
+    }
+    function switchMode(mode) {
+      entryMode = mode;
+      document.querySelectorAll(".mode-btn").forEach(button => button.classList.toggle("active", button.dataset.mode === mode));
+      renderEntry();
+    }
     function setDefaultDates() {
       const today = new Date();
       const follow = new Date();
@@ -592,14 +576,28 @@
       document.getElementById("appliedDate").value = toDateInput(today);
       document.getElementById("followDate").value = toDateInput(follow);
     }
-
-    function toDateInput(date) {
-      return date.toISOString().slice(0, 10);
-    }
-
-    function getFormData() {
+    function toDateInput(date) { return date.toISOString().slice(0, 10); }
+    function normalizeJob(job) {
       return {
+        id: job.id || crypto.randomUUID(),
+        createdAt: job.createdAt || new Date().toISOString(),
+        appliedDate: job.appliedDate || toDateInput(new Date()),
+        company: job.company || "",
+        position: job.position || "",
+        platform: platformOptions.includes(job.platform) ? job.platform : "Other",
+        status: statusOptions.includes(job.status) ? job.status : "Applied",
+        followDate: job.followDate || addDays(job.appliedDate || toDateInput(new Date()), 3),
+        whatsapp: job.whatsapp || "",
+        interviewAsk: job.interviewAsk || "",
+        response: job.response || "",
+        travelImage: job.travelImage || "",
+        travelNote: job.travelNote || ""
+      };
+    }
+    function getFormData() {
+      return normalizeJob({
         id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
         appliedDate: document.getElementById("appliedDate").value,
         company: document.getElementById("company").value.trim(),
         position: document.getElementById("position").value.trim(),
@@ -608,41 +606,149 @@
         followDate: document.getElementById("followDate").value,
         whatsapp: document.getElementById("whatsapp").value.trim(),
         interviewAsk: document.getElementById("interviewAsk").value.trim(),
-        response: document.getElementById("response").value.trim()
-      };
+        response: document.getElementById("response").value.trim(),
+        travelImage: pendingTravelImage,
+        travelNote: document.getElementById("travelNote").value.trim()
+      });
     }
-
-    function parseAiOutput(shouldAdd) {
-      const text = document.getElementById("aiOutput").value.trim();
-      if (!text) {
-        alert("Paste AI output first.");
+    function save() {
+      localStorage.setItem(storageKey, JSON.stringify(jobs));
+      render();
+    }
+    function render() {
+      const today = toDateInput(new Date());
+      document.getElementById("totalApplied").textContent = jobs.length;
+      document.getElementById("needFollow").textContent = jobs.filter(job => job.followDate <= today && !["Rejected", "Offer"].includes(job.status)).length;
+      document.getElementById("interviewCount").textContent = jobs.filter(job => ["Interview", "Interviewed"].includes(job.status)).length;
+      document.getElementById("positiveCount").textContent = jobs.filter(job => ["Replied", "Interview", "Interviewed", "Offer"].includes(job.status)).length;
+      renderEntry();
+      renderWorkspace();
+    }
+    function filteredJobs() {
+      const query = document.getElementById("entrySearch").value.toLowerCase();
+      const sort = document.getElementById("entrySort").value;
+      return jobs
+        .filter(job => [job.company, job.position, job.platform, job.status, job.response, job.travelNote].join(" ").toLowerCase().includes(query))
+        .sort((a, b) => {
+          if (sort === "status") return a.status.localeCompare(b.status) || b.appliedDate.localeCompare(a.appliedDate);
+          if (sort === "followDate") return a.followDate.localeCompare(b.followDate);
+          return b.appliedDate.localeCompare(a.appliedDate);
+        });
+    }
+    function renderEntry() {
+      const list = filteredJobs();
+      if (!list.length) {
+        entryBody.innerHTML = `<tr><td colspan="12" class="empty">No job records yet. Go Workspace, paste AI output or quick add your first application.</td></tr>`;
         return;
       }
-
+      entryBody.innerHTML = list.map(job => entryMode === "edit" ? rowEdit(job) : rowPreview(job)).join("");
+    }
+    function rowPreview(job) {
+      return `
+        <tr>
+          <td>${job.appliedDate}</td>
+          <td class="company"><strong>${esc(job.company)}</strong></td>
+          <td class="position">${esc(job.position)}</td>
+          <td>${esc(job.platform)}</td>
+          <td><span class="tag ${statusClass(job.status)}">${job.status}</span></td>
+          <td class="${isDue(job) ? "due" : ""}">${job.followDate}</td>
+          <td class="text-cell"><div class="clip">${esc(job.whatsapp || "-")}</div></td>
+          <td class="text-cell"><div class="clip">${esc(job.interviewAsk || "-")}</div></td>
+          <td class="text-cell"><div class="clip">${esc(job.response || "-")}</div></td>
+          <td class="map-cell"><div class="travel-thumb" onclick="openImageModal('${job.id}')">${job.travelImage ? `<img src="${job.travelImage}" alt="Travel map">` : "No map"}</div></td>
+          <td class="text-cell"><div class="clip">${esc(job.travelNote || "-")}</div></td>
+          <td><button class="small-btn" onclick="copyJobTemplate('${job.id}')">AI</button></td>
+        </tr>
+      `;
+    }
+    function rowEdit(job) {
+      return `
+        <tr>
+          <td><input type="date" value="${job.appliedDate}" onchange="updateJob('${job.id}', 'appliedDate', this.value)"></td>
+          <td class="company"><strong>${esc(job.company)}</strong></td>
+          <td class="position">${esc(job.position)}</td>
+          <td>${esc(job.platform)}</td>
+          <td>${inlineSelect(job.id, "status", job.status, statusOptions)}</td>
+          <td><input type="date" value="${job.followDate}" onchange="updateJob('${job.id}', 'followDate', this.value)"></td>
+          <td><textarea onchange="updateJob('${job.id}', 'whatsapp', this.value)">${esc(job.whatsapp)}</textarea></td>
+          <td><textarea onchange="updateJob('${job.id}', 'interviewAsk', this.value)">${esc(job.interviewAsk)}</textarea></td>
+          <td><textarea onchange="updateJob('${job.id}', 'response', this.value)">${esc(job.response)}</textarea></td>
+          <td class="map-cell">
+            <div class="travel-thumb" onclick="openImageModal('${job.id}')">${job.travelImage ? `<img src="${job.travelImage}" alt="Travel map">` : "No map"}</div>
+            <input type="file" accept="image/*" onchange="updateTravelImage('${job.id}', this.files[0])" style="margin-top:8px;">
+            <div class="paste-zone" tabindex="0" onpaste="pasteTravelImage(event, '${job.id}')">Paste map</div>
+          </td>
+          <td><textarea onchange="updateJob('${job.id}', 'travelNote', this.value)">${esc(job.travelNote)}</textarea></td>
+          <td>
+            <button class="small-btn" onclick="copyJobTemplate('${job.id}')">AI</button>
+            <button class="small-btn delete" onclick="removeJob('${job.id}')">X</button>
+          </td>
+        </tr>
+      `;
+    }
+    function renderWorkspace() {
+      const recent = [...jobs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      if (!recent.length) {
+        workspaceBody.innerHTML = `<tr><td colspan="8" class="empty">Newest added jobs will appear here.</td></tr>`;
+        return;
+      }
+      workspaceBody.innerHTML = recent.map(job => `
+        <tr>
+          <td>${job.appliedDate}</td>
+          <td><strong>${esc(job.company || "Untitled")}</strong></td>
+          <td>${esc(job.position || "-")}</td>
+          <td>${esc(job.platform)}</td>
+          <td>${inlineSelect(job.id, "status", job.status, statusOptions)}</td>
+          <td><input type="date" value="${job.followDate}" onchange="updateJob('${job.id}', 'followDate', this.value)"></td>
+          <td><input value="${escAttr(job.response)}" placeholder="Response" onchange="updateJob('${job.id}', 'response', this.value)"></td>
+          <td>
+            <button class="small-btn" onclick="copyJobTemplate('${job.id}')">AI</button>
+            <button class="small-btn" onclick="markStatus('${job.id}','Replied')">Replied</button>
+            <button class="small-btn" onclick="markStatus('${job.id}','Interview')">Interview</button>
+            <button class="small-btn delete" onclick="removeJob('${job.id}')">X</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+    function inlineSelect(id, key, value, options) {
+      return `<select onchange="updateJob('${id}', '${key}', this.value)">${options.map(option => `<option ${option === value ? "selected" : ""}>${option}</option>`).join("")}</select>`;
+    }
+    function updateJob(id, key, value) {
+      jobs = jobs.map(job => job.id === id ? { ...job, [key]: value } : job);
+      localStorage.setItem(storageKey, JSON.stringify(jobs));
+      render();
+    }
+    async function updateTravelImage(id, file) {
+      if (!file) return;
+      updateJob(id, "travelImage", await compressImage(file));
+    }
+    async function pasteTravelImage(event, id) {
+      const file = [...event.clipboardData.items].find(item => item.type.startsWith("image/"))?.getAsFile();
+      if (!file) return;
+      event.preventDefault();
+      updateJob(id, "travelImage", await compressImage(file));
+    }
+    function markStatus(id, status) {
+      updateJob(id, "status", status);
+    }
+    function removeJob(id) {
+      if (confirm("Remove this job record?")) {
+        jobs = jobs.filter(job => job.id !== id);
+        save();
+      }
+    }
+    function parseAiOutput(shouldAdd) {
+      const text = document.getElementById("aiOutput").value.trim();
+      if (!text) return alert("Paste AI output first.");
       const parsed = {
         appliedDate: parseDateFromText(getTableValue(text, "Applied date")),
         company: getTableValue(text, "Company"),
         position: getTableValue(text, "Position"),
         platform: normalizePlatform(getTableValue(text, "Platform")),
         status: normalizeStatus(getTableValue(text, "Current status")),
-        whatsapp: cleanSection(extractSection(text, [
-          "WhatsApp Follow-Up Message",
-          "WhatsApp Follow Up Message",
-          "WhatsApp Message",
-          "Follow-Up Message",
-          "Follow Up Message"
-        ], [
-          "Interview Questions You Should Ask",
-          "Interview Questions",
-          "Questions You Should Ask"
-        ])),
-        interviewAsk: cleanSection(extractSection(text, [
-          "Interview Questions You Should Ask",
-          "Interview Questions",
-          "Questions You Should Ask"
-        ], []))
+        whatsapp: cleanSection(extractSection(text, ["WhatsApp Follow-Up Message", "WhatsApp Follow Up Message", "WhatsApp Message", "Follow-Up Message", "Follow Up Message"], ["Interview Questions You Should Ask", "Interview Questions", "Questions You Should Ask"])),
+        interviewAsk: cleanSection(extractSection(text, ["Interview Questions You Should Ask", "Interview Questions", "Questions You Should Ask"], []))
       };
-
       if (parsed.appliedDate) {
         document.getElementById("appliedDate").value = parsed.appliedDate;
         document.getElementById("followDate").value = addDays(parsed.appliedDate, 3);
@@ -653,15 +759,15 @@
       if (parsed.status) document.getElementById("status").value = parsed.status;
       if (parsed.whatsapp) document.getElementById("whatsapp").value = parsed.whatsapp;
       if (parsed.interviewAsk) document.getElementById("interviewAsk").value = parsed.interviewAsk;
-
       if (shouldAdd) {
         jobs.unshift(getFormData());
         save();
         form.reset();
+        pendingTravelImage = "";
+        updatePasteZone();
         setDefaultDates();
       }
     }
-
     function getTableValue(text, field) {
       const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const boldPattern = new RegExp(`\\|\\s*\\*\\*${escaped}\\*\\*\\s*\\|\\s*([^|]+?)\\s*\\|`, "i");
@@ -669,12 +775,10 @@
       const colonPattern = new RegExp(`${escaped}\\s*:\\s*(.+)`, "i");
       return (text.match(boldPattern)?.[1] || text.match(plainPattern)?.[1] || text.match(colonPattern)?.[1] || "").trim();
     }
-
     function extractSection(text, startHeadings, endHeadings) {
       const lines = text.split(/\r?\n/);
       const startIndex = lines.findIndex(line => startHeadings.some(heading => line.toLowerCase().includes(heading.toLowerCase())));
       if (startIndex === -1) return "";
-
       let endIndex = lines.length;
       for (let i = startIndex + 1; i < lines.length; i += 1) {
         const line = lines[i].toLowerCase();
@@ -685,183 +789,84 @@
           break;
         }
       }
-
       return lines.slice(startIndex + 1, endIndex).join("\n").trim();
     }
-
     function cleanSection(value) {
-      return value
-        .replace(/^[-*_>\s]+$/gm, "")
-        .replace(/^>\s?/gm, "")
-        .replace(/\*\*/g, "")
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-        .trim();
+      return value.replace(/^[-*_>\s]+$/gm, "").replace(/^>\s?/gm, "").replace(/\*\*/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").trim();
     }
-
     function parseDateFromText(value) {
       if (!value) return "";
       const iso = value.match(/\d{4}-\d{2}-\d{2}/)?.[0];
       if (iso) return iso;
-
       const match = value.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
       if (!match) return "";
-
-      const months = {
-        january: "01", jan: "01",
-        february: "02", feb: "02",
-        march: "03", mar: "03",
-        april: "04", apr: "04",
-        may: "05",
-        june: "06", jun: "06",
-        july: "07", jul: "07",
-        august: "08", aug: "08",
-        september: "09", sep: "09",
-        october: "10", oct: "10",
-        november: "11", nov: "11",
-        december: "12", dec: "12"
-      };
-
-      const day = match[1].padStart(2, "0");
-      const month = months[match[2].toLowerCase()];
-      const year = match[3];
-      return month ? `${year}-${month}-${day}` : "";
+      const months = { january:"01",jan:"01",february:"02",feb:"02",march:"03",mar:"03",april:"04",apr:"04",may:"05",june:"06",jun:"06",july:"07",jul:"07",august:"08",aug:"08",september:"09",sep:"09",october:"10",oct:"10",november:"11",nov:"11",december:"12",dec:"12" };
+      return months[match[2].toLowerCase()] ? `${match[3]}-${months[match[2].toLowerCase()]}-${match[1].padStart(2,"0")}` : "";
     }
-
     function addDays(dateString, days) {
       const date = new Date(`${dateString}T00:00:00`);
       date.setDate(date.getDate() + days);
       return toDateInput(date);
     }
-
     function normalizePlatform(value) {
-      const platform = value.toLowerCase();
-      const options = [...document.getElementById("platform").options].map(option => option.value);
-      return options.find(option => platform.includes(option.toLowerCase())) || "Other";
+      const platform = String(value || "").toLowerCase();
+      return platformOptions.find(option => platform.includes(option.toLowerCase())) || "Other";
     }
-
     function normalizeStatus(value) {
-      const status = value.toLowerCase();
+      const status = String(value || "").toLowerCase();
       if (status.includes("offer")) return "Offer";
       if (status.includes("reject")) return "Rejected";
       if (status.includes("interviewed")) return "Interviewed";
       if (status.includes("interview")) return "Interview";
-      if (status.includes("replied") || status.includes("response")) return "Replied";
       if (status.includes("no response")) return "No Response";
+      if (status.includes("replied") || status.includes("response")) return "Replied";
       return "Applied";
     }
-
-    function save() {
-      localStorage.setItem(storageKey, JSON.stringify(jobs));
-      render();
-    }
-
-    function render() {
-      const q = search.value.toLowerCase();
-      const visible = jobs.filter(job => [job.company, job.position, job.platform, job.status, job.response].join(" ").toLowerCase().includes(q));
-      const today = toDateInput(new Date());
-
-      document.getElementById("totalApplied").textContent = jobs.length;
-      document.getElementById("needFollow").textContent = jobs.filter(job => job.followDate <= today && !["Rejected", "Offer"].includes(job.status)).length;
-      document.getElementById("interviewCount").textContent = jobs.filter(job => ["Interview", "Interviewed"].includes(job.status)).length;
-      document.getElementById("positiveCount").textContent = jobs.filter(job => ["Replied", "Interview", "Interviewed", "Offer"].includes(job.status)).length;
-
-      jobsBody.innerHTML = visible.map(job => {
-        const statusClass = job.status.replace(/\s/g, "");
-        const dueClass = job.followDate <= today && !["Rejected", "Offer"].includes(job.status) ? "due" : "";
-        return `
-          <tr>
-            <td>${job.appliedDate}</td>
-            <td><strong>${esc(job.company)}</strong></td>
-            <td>${esc(job.position)}</td>
-            <td>${job.platform}</td>
-            <td><span class="tag ${statusClass}">${job.status}</span></td>
-            <td class="${dueClass}">${job.followDate}</td>
-            <td>${esc(short(job.whatsapp))}</td>
-            <td>${esc(short(job.interviewAsk))}</td>
-            <td>${esc(short(job.response))}</td>
-            <td>
-              <button class="small-btn" onclick="selectJob('${job.id}')">AI</button>
-              <button class="small-btn" onclick="markStatus('${job.id}','Replied')">Replied</button>
-              <button class="small-btn" onclick="markStatus('${job.id}','Interview')">Interview</button>
-              <button class="small-btn delete" onclick="removeJob('${job.id}')">X</button>
-            </td>
-          </tr>
-        `;
-      }).join("");
-
-      if (jobs[0]) {
-        fillTemplate(jobs[0]);
-      } else {
-        fillTemplate(null);
-      }
-    }
-
-    function selectJob(id) {
+    function copyJobTemplate(id) {
       const job = jobs.find(item => item.id === id);
-      fillTemplate(job);
+      const text = job ? fixedTemplate
+        .replace("| Applied date | 2026-05-30 |", `| Applied date | ${job.appliedDate} |`)
+        .replace("| Company | INFLUASIA (World of Buzz / Lobak Merah / NOODOU) |", `| Company | ${job.company} |`)
+        .replace("| Position | Graphic Designer cum Video Editor |", `| Position | ${job.position} |`)
+        .replace("| Platform | JobStreet |", `| Platform | ${job.platform} |`)
+        .replace("| Current status | Applied |", `| Current status | ${job.status} |`) : fixedTemplate;
+      navigator.clipboard.writeText(text);
     }
-
-    function fillTemplate(job) {
-      const blank = {
-        appliedDate: "-",
-        company: "-",
-        position: "-",
-        platform: "-",
-        status: "-",
-        whatsapp: "Please write a short, polite WhatsApp follow-up message.",
-        interviewAsk: "Please write simple interview questions I can ask about job scope, salary, working hours, training, and next step."
-      };
-      const data = job || blank;
-
-      document.getElementById("tplDate").textContent = data.appliedDate;
-      document.getElementById("tplCompany").textContent = data.company;
-      document.getElementById("tplPosition").textContent = data.position;
-      document.getElementById("tplPlatform").textContent = data.platform;
-      document.getElementById("tplStatus").textContent = data.status;
-      document.getElementById("tplWhatsapp").textContent = data.whatsapp || blank.whatsapp;
-      document.getElementById("tplInterview").textContent = data.interviewAsk || blank.interviewAsk;
-
-      document.getElementById("copyBox").textContent =
-`Help me write job application follow-up content based on this table.
-
-| Field | Fill In |
-|---|---|
-| Applied date | ${data.appliedDate} |
-| Company | ${data.company} |
-| Position | ${data.position} |
-| Platform | ${data.platform} |
-| Current status | ${data.status} |
-
-| Output Needed | Instruction |
-|---|---|
-| WhatsApp follow-up message | Write a short, polite WhatsApp message to follow up on my job application. Keep it friendly, professional, and not too long. |
-| Interview questions I should ask | Give me simple questions I can ask the employer during interview, focused on job scope, salary, working hours, training, and next steps. |`;
+    async function compressImage(file) {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = url; });
+      const maxWidth = 900;
+      const scale = Math.min(1, maxWidth / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      return canvas.toDataURL("image/jpeg", .72);
     }
-
-    function markStatus(id, status) {
-      jobs = jobs.map(job => job.id === id ? { ...job, status } : job);
-      save();
+    function updatePasteZone() {
+      document.getElementById("travelPasteZone").textContent = pendingTravelImage ? "Travel screenshot ready. Add Job to save it." : "Click here and paste map screenshot from clipboard.";
     }
-
-    function removeJob(id) {
-      jobs = jobs.filter(job => job.id !== id);
-      save();
+    function openImageModal(id) {
+      const job = jobs.find(item => item.id === id);
+      if (!job?.travelImage) return;
+      document.getElementById("modalImage").src = job.travelImage;
+      document.getElementById("imageModal").classList.add("open");
     }
-
-    function short(value) {
-      if (!value) return "-";
-      return value.length > 58 ? `${value.slice(0, 58)}...` : value;
+    function closeImageModal() { document.getElementById("imageModal").classList.remove("open"); }
+    function statusClass(status) { return status.replace(/\s/g, ""); }
+    function isDue(job) { return job.followDate <= toDateInput(new Date()) && !["Rejected", "Offer"].includes(job.status); }
+    function flashButton(id, text) {
+      const button = document.getElementById(id);
+      const original = button.textContent;
+      button.textContent = text;
+      setTimeout(() => button.textContent = original, 900);
     }
-
     function esc(value) {
-      return String(value || "").replace(/[&<>"']/g, char => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-      })[char]);
+      return String(value || "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" })[char]);
     }
+    function escAttr(value) { return esc(value).replace(/`/g, "&#096;"); }
   </script>
 </body>
 </html>
