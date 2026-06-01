@@ -1020,7 +1020,7 @@
       canvas.height = Math.round(img.height * scale);
       canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
-      return canvas.toDataURL("image/webp", .90);
+      return canvas.toDataURL("image/webp", .55);
     }
     function updatePasteZone() {
       document.getElementById("travelPasteZone").textContent = pendingTravelImage ? "Travel screenshot ready. Add Job to save it." : "Click here and paste map screenshot from clipboard.";
