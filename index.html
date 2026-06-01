@@ -182,6 +182,60 @@
     .metric:nth-child(2)::before { background: var(--gold); }
     .metric:nth-child(3)::before { background: var(--gold); }
     .metric:nth-child(4)::before { background: var(--green); }
+    .metric.progress-led.active {
+      --led: var(--gold);
+      border-color: color-mix(in srgb, var(--led) 35%, transparent);
+      animation: followLedPanel 2.4s ease-in-out infinite;
+      isolation: isolate;
+    }
+    .metric.progress-led.active::after {
+      content: "";
+      position: absolute;
+      inset: -42%;
+      z-index: 0;
+      background: conic-gradient(from 0deg, transparent 0deg, transparent 286deg, var(--led) 308deg, color-mix(in srgb, var(--led) 42%, transparent) 326deg, transparent 344deg, transparent 360deg);
+      opacity: .86;
+      animation: followLedOrbit 3.2s linear infinite;
+    }
+    .metric.progress-led .led-mask {
+      display: none;
+    }
+    .metric.progress-led.active .led-mask {
+      display: block;
+      position: absolute;
+      inset: 1px;
+      z-index: 1;
+      border-radius: 13px;
+      background: var(--panel);
+      pointer-events: none;
+    }
+    .metric.progress-led.active span,
+    .metric.progress-led.active strong {
+      position: relative;
+      z-index: 2;
+    }
+    .metric.progress-led.active::before {
+      background: var(--led);
+      z-index: 3;
+      animation: followLedStrip 1.8s ease-in-out infinite;
+    }
+    .metric.progress-led.active strong {
+      text-shadow: 0 0 16px color-mix(in srgb, var(--led) 32%, transparent);
+    }
+    .metric.interview-led { --led: var(--red); }
+    .metric.offer-good::before { background: var(--green); }
+    .metric.offer-good strong { color: var(--green); text-shadow: 0 0 16px rgba(105,240,174,.18); }
+    @keyframes followLedPanel {
+      0%, 100% { box-shadow: 0 24px 70px rgba(0,0,0,.34), 0 0 0 rgba(248,199,108,0); }
+      50% { box-shadow: 0 24px 70px rgba(0,0,0,.34), 0 0 24px rgba(248,199,108,.18); }
+    }
+    @keyframes followLedStrip {
+      0%, 100% { opacity: .45; filter: brightness(.9); }
+      50% { opacity: 1; filter: brightness(1.45); }
+    }
+    @keyframes followLedOrbit {
+      to { transform: rotate(1turn); }
+    }
     .metric span { color: var(--muted); font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
     .metric strong { display: block; margin-top: 10px; font-size: clamp(26px, 4vw, 38px); line-height: 1; }
 
@@ -385,9 +439,9 @@
 
     <section class="grid metrics">
       <article class="card metric"><span>Total Applied</span><strong id="totalApplied">0</strong></article>
-      <article class="card metric"><span>Need Follow Up</span><strong id="needFollow">0</strong></article>
-      <article class="card metric"><span>Interview</span><strong id="interviewCount">0</strong></article>
-      <article class="card metric"><span>Offer / Replied</span><strong id="positiveCount">0</strong></article>
+      <article class="card metric progress-led" id="needFollowCard"><span class="led-mask"></span><span>Need Follow Up</span><strong id="needFollow">0</strong></article>
+      <article class="card metric progress-led interview-led" id="interviewCard"><span class="led-mask"></span><span>Interview</span><strong id="interviewCount">0</strong></article>
+      <article class="card metric offer-good"><span>Offer / Replied</span><strong id="positiveCount">0</strong></article>
     </section>
 
     <section class="card mission">
@@ -442,15 +496,15 @@
                 <tr>
                   <th>Applied</th>
                   <th>Company</th>
-                  <th>Position</th>
-                  <th>Platform</th>
+                  <th>Map</th>
+                  <th>Travel Note</th>
                   <th>Status</th>
                   <th>Follow Up</th>
                   <th>WhatsApp</th>
                   <th>Interview</th>
                   <th>Response</th>
-                  <th>Map</th>
-                  <th>Travel Note</th>
+                  <th>Platform</th>
+                  <th>Position</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -715,6 +769,8 @@
       document.getElementById("needFollow").textContent = needFollow;
       document.getElementById("interviewCount").textContent = jobs.filter(job => ["Interview", "Interviewed"].includes(job.status)).length;
       document.getElementById("positiveCount").textContent = positives;
+      document.getElementById("needFollowCard").classList.toggle("active", needFollow > 0);
+      document.getElementById("interviewCard").classList.toggle("active", interviews > 0);
       document.getElementById("missionFocus").textContent = needFollow ? `${needFollow} Follow Up` : interviews ? "Prepare" : "Apply";
       renderEntry();
       renderWorkspace();
@@ -743,15 +799,15 @@
         <tr class="status-${statusClass(job.status)}">
           <td>${job.appliedDate}</td>
           <td class="company"><strong>${esc(job.company)}</strong></td>
-          <td class="position">${esc(job.position)}</td>
-          <td>${esc(job.platform)}</td>
+          <td class="map-cell"><div class="travel-thumb" onclick="openImageModal('${job.id}')">${job.travelImage ? `<img src="${job.travelImage}" alt="Travel map">` : "No map"}</div></td>
+          <td class="text-cell"><div class="clip">${esc(job.travelNote || "-")}</div></td>
           <td><span class="tag ${statusClass(job.status)}">${job.status}</span></td>
           <td class="${isDue(job) ? "due" : ""}">${job.followDate}</td>
           <td class="text-cell"><div class="clip">${esc(job.whatsapp || "-")}</div></td>
           <td class="text-cell"><div class="clip">${esc(job.interviewAsk || "-")}</div></td>
           <td class="text-cell"><div class="clip">${esc(job.response || "-")}</div></td>
-          <td class="map-cell"><div class="travel-thumb" onclick="openImageModal('${job.id}')">${job.travelImage ? `<img src="${job.travelImage}" alt="Travel map">` : "No map"}</div></td>
-          <td class="text-cell"><div class="clip">${esc(job.travelNote || "-")}</div></td>
+          <td>${esc(job.platform)}</td>
+          <td class="position">${esc(job.position)}</td>
           <td><button class="small-btn" onclick="copyJobTemplate('${job.id}')">AI</button></td>
         </tr>
       `;
@@ -761,19 +817,19 @@
         <tr class="status-${statusClass(job.status)}">
           <td><input type="date" value="${job.appliedDate}" onchange="updateJob('${job.id}', 'appliedDate', this.value)"></td>
           <td class="company"><strong>${esc(job.company)}</strong></td>
-          <td class="position">${esc(job.position)}</td>
-          <td>${esc(job.platform)}</td>
-          <td>${inlineSelect(job.id, "status", job.status, statusOptions)}</td>
-          <td><input type="date" value="${job.followDate}" onchange="updateJob('${job.id}', 'followDate', this.value)"></td>
-          <td><textarea onchange="updateJob('${job.id}', 'whatsapp', this.value)">${esc(job.whatsapp)}</textarea></td>
-          <td><textarea onchange="updateJob('${job.id}', 'interviewAsk', this.value)">${esc(job.interviewAsk)}</textarea></td>
-          <td><textarea onchange="updateJob('${job.id}', 'response', this.value)">${esc(job.response)}</textarea></td>
           <td class="map-cell">
             <div class="travel-thumb" onclick="openImageModal('${job.id}')">${job.travelImage ? `<img src="${job.travelImage}" alt="Travel map">` : "No map"}</div>
             <input type="file" accept="image/*" onchange="updateTravelImage('${job.id}', this.files[0])" style="margin-top:8px;">
             <div class="paste-zone" tabindex="0" onpaste="pasteTravelImage(event, '${job.id}')">Paste map</div>
           </td>
           <td><textarea onchange="updateJob('${job.id}', 'travelNote', this.value)">${esc(job.travelNote)}</textarea></td>
+          <td>${inlineSelect(job.id, "status", job.status, statusOptions)}</td>
+          <td><input type="date" value="${job.followDate}" onchange="updateJob('${job.id}', 'followDate', this.value)"></td>
+          <td><textarea onchange="updateJob('${job.id}', 'whatsapp', this.value)">${esc(job.whatsapp)}</textarea></td>
+          <td><textarea onchange="updateJob('${job.id}', 'interviewAsk', this.value)">${esc(job.interviewAsk)}</textarea></td>
+          <td><textarea onchange="updateJob('${job.id}', 'response', this.value)">${esc(job.response)}</textarea></td>
+          <td>${esc(job.platform)}</td>
+          <td class="position">${esc(job.position)}</td>
           <td>
             <button class="small-btn" onclick="copyJobTemplate('${job.id}')">AI</button>
             <button class="small-btn delete" onclick="removeJob('${job.id}')">X</button>
