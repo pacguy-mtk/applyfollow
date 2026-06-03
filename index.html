@@ -301,7 +301,7 @@
       border-collapse: collapse;
       font-size: 14px;
     }
-    .entry-table { min-width: 1540px; }
+    .entry-table { min-width: 1740px; }
     .workspace-table { min-width: 1120px; font-size: 13px; }
     th, td {
       padding: 12px 13px;
@@ -526,7 +526,8 @@
                   <th>Travel Note</th>
                   <th>Status</th>
                   <th>Follow Up</th>
-                  <th>WhatsApp</th>
+                  <th>Follow-up PM</th>
+                  <th>Questions Before Interview</th>
                   <th>Interview</th>
                   <th>Response</th>
                   <th>Platform</th>
@@ -569,7 +570,8 @@
                   </label>
                   <label>Follow Up Date<input id="followDate" type="date" required></label>
                 </div>
-                <label>WhatsApp Message To Reply<textarea id="whatsapp" placeholder="Paste AI generated WhatsApp message here."></textarea></label>
+                <label>Questions To Ask Before Interview<textarea id="whatsapp" placeholder="Questions to ask if HR contacts you before accepting or attending interview."></textarea></label>
+                <label>Follow-up PM<textarea id="followupPm" placeholder="AI parser fills this if it finds a Follow-up message. Otherwise the system uses the default PM."></textarea></label>
                 <label>Interview Questions / Notes<textarea id="interviewAsk" placeholder="Paste AI generated interview questions here."></textarea></label>
                 <label>Response / Notes<textarea id="response" placeholder="No response yet, HR replied, interview time, etc."></textarea></label>
                 <label>Travel Map Image<input id="travelImage" type="file" accept="image/*"></label>
@@ -595,13 +597,14 @@
             <section class="card">
               <div class="panel-head">
                 <h2>AI Output Parser</h2>
-                <p>Paste AI response. It fills date, company, position, platform, status, WhatsApp, and interview questions.</p>
+                <p>Paste AI response. It fills date, company, position, platform, status, follow-up PM, questions before interview, and interview notes.</p>
               </div>
               <div class="stack">
                 <textarea id="aiOutput" style="min-height:180px;" placeholder="Paste full AI output here..."></textarea>
                 <div class="actions" style="justify-content:flex-start;">
                   <button class="btn primary" id="parseAiBtn" type="button">Parse AI Output</button>
                   <button class="btn" id="addParsedBtn" type="button">Parse + Add Job</button>
+                  <button class="btn" id="copyParsedPmBtn" type="button">Parse + Copy PM</button>
                   <button class="btn" id="clearParserBtn" type="button">Clear Parser</button>
                 </div>
               </div>
@@ -645,16 +648,27 @@
 
 | Field | Fill In |
 |---|---|
-| Applied date | 2026-05-30 |
-| Company | INFLUASIA (World of Buzz / Lobak Merah / NOODOU) |
-| Position | Graphic Designer cum Video Editor |
-| Platform | JobStreet |
+| Applied date | year-month-date |
+| Company | (name) |
+| Position | (position) |
+| Platform | (platform) |
 | Current status | Applied |
 
 | Output Needed | Instruction |
 |---|---|
-| WhatsApp follow-up message | Write a short, polite WhatsApp message to follow up on my job application. Keep it friendly, professional, and not too long. |
-| Interview questions I should ask | Give me simple questions I can ask the employer during interview, focused on job scope, salary, working hours, training, and next steps. |`;
+| Follow-up PM | Write a short, polite message to follow up if I get no response after applying. Use the follow-up draft below as the base and customize it with the company, position, and platform. |
+| Questions to ask before interview | Prepare short questions I can ask if HR contacts me before interview. Help me clarify location, company background, job scope, on-site/hybrid/remote arrangement, working hours, salary range if appropriate, interview format, and next steps. Keep it polite and easy for me to choose from. |
+| Interview questions I should ask | Give me simple questions I can ask the employer during interview, focused on job scope, salary, working hours, training, and next steps. |
+
+Follow-up:
+Hi [HR Name / Recruitment Team], good morning!
+I hope you are doing well. I’m following up on my application submitted via [JobStreet / Platform Name] for the [Position Name] role with [Company Name].
+I am interested in the opportunity, especially given how the scope aligns with my background in practical design production and using AI-assisted workflows to accelerate creative output.
+I am available immediately with zero notice period. If the team is currently shortlisting, I would love to share my live portfolio (https://zijun198.github.io/) or jump on a quick brief chat.
+Thank you!
+
+Best regards,
+Looi Jia Jun`;
 
     const form = document.getElementById("jobForm");
     const entryBody = document.getElementById("entryBody");
@@ -703,6 +717,7 @@
     });
     document.getElementById("parseAiBtn").addEventListener("click", () => parseAiOutput(false));
     document.getElementById("addParsedBtn").addEventListener("click", () => parseAiOutput(true));
+    document.getElementById("copyParsedPmBtn").addEventListener("click", copyParsedFollowUpPm);
     document.getElementById("clearParserBtn").addEventListener("click", () => document.getElementById("aiOutput").value = "");
 
     document.getElementById("exportBtn").addEventListener("click", () => {
@@ -765,6 +780,7 @@
         status: statusOptions.includes(job.status) ? job.status : "Applied",
         followDate: job.followDate || addWorkingDays(job.appliedDate || toDateInput(new Date()), 3),
         whatsapp: job.whatsapp || "",
+        followupPm: job.followupPm || job.followUpPm || "",
         interviewAsk: job.interviewAsk || "",
         response: job.response || "",
         travelImage: job.travelImage || "",
@@ -782,6 +798,7 @@
         status: document.getElementById("status").value,
         followDate: document.getElementById("followDate").value,
         whatsapp: document.getElementById("whatsapp").value.trim(),
+        followupPm: document.getElementById("followupPm").value.trim(),
         interviewAsk: document.getElementById("interviewAsk").value.trim(),
         response: document.getElementById("response").value.trim(),
         travelImage: pendingTravelImage,
@@ -815,14 +832,14 @@
         .filter(job => [job.company, job.position, job.platform, job.status, job.response, job.travelNote].join(" ").toLowerCase().includes(query))
         .sort((a, b) => {
           if (sort === "status") return a.status.localeCompare(b.status) || b.appliedDate.localeCompare(a.appliedDate);
-          if (sort === "followDate") return a.followDate.localeCompare(b.followDate);
+          if (sort === "followDate") return Number(isDue(b)) - Number(isDue(a)) || a.followDate.localeCompare(b.followDate);
           return b.appliedDate.localeCompare(a.appliedDate);
         });
     }
     function renderEntry() {
       const list = filteredJobs();
       if (!list.length) {
-        entryBody.innerHTML = `<tr><td colspan="12" class="empty">No job records yet. Go Workspace, paste AI output or quick add your first application.</td></tr>`;
+        entryBody.innerHTML = `<tr><td colspan="13" class="empty">No job records yet. Go Workspace, paste AI output or quick add your first application.</td></tr>`;
         return;
       }
       entryBody.innerHTML = list.map(job => entryMode === "edit" ? rowEdit(job) : rowPreview(job)).join("");
@@ -861,6 +878,7 @@
           <td class="text-cell"><div class="clip">${esc(job.travelNote || "-")}</div></td>
           <td><span class="tag ${statusClass(job.status)}">${job.status}</span></td>
           <td class="${due ? "due" : ""}">${job.followDate}</td>
+          <td class="text-cell"><div class="clip">${esc(job.followupPm || followUpPm(job))}</div><button class="small-btn" onclick="copyFollowUpPm('${job.id}')">Copy PM</button></td>
           <td class="text-cell"><div class="clip">${esc(job.whatsapp || "-")}</div></td>
           <td class="text-cell"><div class="clip">${esc(job.interviewAsk || "-")}</div></td>
           <td class="text-cell"><div class="clip">${esc(job.response || "-")}</div></td>
@@ -884,6 +902,7 @@
           <td><textarea onchange="updateJob('${job.id}', 'travelNote', this.value)">${esc(job.travelNote)}</textarea></td>
           <td>${inlineSelect(job.id, "status", job.status, statusOptions)}</td>
           <td><input class="${due ? "due" : ""}" type="date" value="${job.followDate}" onchange="updateJob('${job.id}', 'followDate', this.value)"></td>
+          <td><textarea onchange="updateJob('${job.id}', 'followupPm', this.value)">${esc(job.followupPm || followUpPm(job))}</textarea><button class="small-btn" onclick="copyFollowUpPm('${job.id}')">Copy PM</button></td>
           <td><textarea onchange="updateJob('${job.id}', 'whatsapp', this.value)">${esc(job.whatsapp)}</textarea></td>
           <td><textarea onchange="updateJob('${job.id}', 'interviewAsk', this.value)">${esc(job.interviewAsk)}</textarea></td>
           <td><textarea onchange="updateJob('${job.id}', 'response', this.value)">${esc(job.response)}</textarea></td>
@@ -956,7 +975,8 @@
         position: improvePosition(getTableValue(text, "Position"), text),
         platform: normalizePlatform(getTableValue(text, "Platform")),
         status: normalizeStatus(getTableValue(text, "Current status")),
-        whatsapp: cleanSection(extractSection(text, ["WhatsApp Follow-Up Message", "WhatsApp Follow Up Message", "WhatsApp Message", "Follow-Up Message", "Follow Up Message"], ["Interview Questions You Should Ask", "Interview Questions", "Questions You Should Ask"])),
+        whatsapp: cleanSection(extractSection(text, ["Questions to ask before interview", "Questions Before Interview", "WhatsApp Message Engage", "WhatsApp Engage", "WhatsApp Questions", "Pre-Interview WhatsApp", "Before Interview WhatsApp"], ["WhatsApp Follow-Up Message", "WhatsApp Follow Up Message", "Follow-up PM", "Follow Up PM", "PM Follow-up", "PM Follow Up", "Interview Questions You Should Ask", "Interview Questions", "Questions You Should Ask"])),
+        followupPm: cleanSection(extractFollowupPmSection(text)),
         interviewAsk: cleanSection(extractSection(text, ["Interview Questions You Should Ask", "Interview Questions", "Questions You Should Ask"], []))
       };
       if (parsed.appliedDate) {
@@ -968,7 +988,11 @@
       if (parsed.platform) document.getElementById("platform").value = parsed.platform;
       if (parsed.status) document.getElementById("status").value = parsed.status;
       if (parsed.whatsapp) document.getElementById("whatsapp").value = parsed.whatsapp;
+      if (parsed.followupPm) document.getElementById("followupPm").value = parsed.followupPm;
       if (parsed.interviewAsk) document.getElementById("interviewAsk").value = parsed.interviewAsk;
+      if (!document.getElementById("followupPm").value.trim()) {
+        document.getElementById("followupPm").value = followUpPm(getFormData());
+      }
       if (shouldAdd) {
         jobs.unshift(getFormData());
         save();
@@ -977,6 +1001,12 @@
         updatePasteZone();
         setDefaultDates();
       }
+    }
+    async function copyParsedFollowUpPm() {
+      parseAiOutput(false);
+      const job = getFormData();
+      await navigator.clipboard.writeText(followUpPm(job));
+      flashButton("copyParsedPmBtn", "PM Copied");
     }
     function getTableValue(text, field) {
       const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -992,9 +1022,30 @@
       let endIndex = lines.length;
       for (let i = startIndex + 1; i < lines.length; i += 1) {
         const line = lines[i].toLowerCase();
-        const isNextHeading = /^#{1,4}\s/.test(lines[i]) && !startHeadings.some(heading => line.includes(heading.toLowerCase()));
+        const isNextHeading = /^#{1,2}\s/.test(lines[i]) && !startHeadings.some(heading => line.includes(heading.toLowerCase()));
         const isNamedEnd = endHeadings.some(heading => line.includes(heading.toLowerCase()));
         if (isNamedEnd || isNextHeading) {
+          endIndex = i;
+          break;
+        }
+      }
+      return lines.slice(startIndex + 1, endIndex).join("\n").trim();
+    }
+    function extractFollowupPmSection(text) {
+      const lines = text.split(/\r?\n/);
+      const startIndex = lines.findIndex(line => {
+        const lower = line.toLowerCase();
+        const isFollowup = lower.includes("follow-up") || lower.includes("follow up") || /\bpm\b/.test(lower);
+        const isEngage = lower.includes("engage") || lower.includes("questions") || lower.includes("before interview") || lower.includes("pre-interview");
+        return isFollowup && !isEngage;
+      });
+      if (startIndex === -1) return "";
+      let endIndex = lines.length;
+      for (let i = startIndex + 1; i < lines.length; i += 1) {
+        const lower = lines[i].toLowerCase();
+        const isNextHeading = /^#{1,2}\s/.test(lines[i]) && !lower.includes("follow-up") && !lower.includes("follow up") && !/\bpm\b/.test(lower);
+        const isNamedEnd = lower.includes("interview questions") || lower.includes("questions to ask before interview") || lower.includes("questions before interview") || lower.includes("whatsapp message engage") || lower.includes("whatsapp engage") || lower.includes("whatsapp questions");
+        if (isNextHeading || isNamedEnd) {
           endIndex = i;
           break;
         }
@@ -1074,12 +1125,28 @@
     function copyJobTemplate(id) {
       const job = jobs.find(item => item.id === id);
       const text = job ? fixedTemplate
-        .replace("| Applied date | 2026-05-30 |", `| Applied date | ${job.appliedDate} |`)
-        .replace("| Company | INFLUASIA (World of Buzz / Lobak Merah / NOODOU) |", `| Company | ${job.company} |`)
-        .replace("| Position | Graphic Designer cum Video Editor |", `| Position | ${job.position} |`)
-        .replace("| Platform | JobStreet |", `| Platform | ${job.platform} |`)
+        .replace("| Applied date | year-month-date |", `| Applied date | ${job.appliedDate} |`)
+        .replace("| Company | (name) |", `| Company | ${job.company} |`)
+        .replace("| Position | (position) |", `| Position | ${job.position} |`)
+        .replace("| Platform | (platform) |", `| Platform | ${job.platform} |`)
         .replace("| Current status | Applied |", `| Current status | ${job.status} |`) : fixedTemplate;
       navigator.clipboard.writeText(text);
+    }
+    function copyFollowUpPm(id) {
+      const job = jobs.find(item => item.id === id);
+      if (!job) return;
+      navigator.clipboard.writeText(followUpPm(job));
+    }
+    function followUpPm(job) {
+      if (job.followupPm) return job.followupPm;
+      return `Hi [HR Name / Recruitment Team], good morning!
+I hope you are doing well. I’m following up on my application submitted via ${job.platform || "[JobStreet / Platform Name]"} for the ${job.position || "[Position Name]"} role with ${job.company || "[Company Name]"}.
+I am interested in the opportunity, especially given how the scope aligns with my background in practical design production and using AI-assisted workflows to accelerate creative output.
+I am available immediately with zero notice period. If the team is currently shortlisting, I would love to share my live portfolio (https://zijun198.github.io/) or jump on a quick brief chat.
+Thank you!
+
+Best regards,
+Looi Jia Jun`;
     }
     async function compressImage(file) {
       const img = new Image();
