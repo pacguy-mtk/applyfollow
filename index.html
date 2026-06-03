@@ -147,6 +147,17 @@
       padding: 14px;
       text-align: right;
       background: rgba(248,199,108,.07);
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+    .mission-action:hover,
+    .mission-action:focus-visible {
+      border-color: rgba(248,199,108,.72);
+      box-shadow: 0 0 22px rgba(248,199,108,.15);
+      outline: none;
+      transform: translateY(-1px);
     }
     .mission-action span {
       display: block;
@@ -322,6 +333,21 @@
     tr.status-Interviewed { box-shadow: inset 3px 0 0 rgba(248,199,108,.58); }
     tr.status-Rejected { box-shadow: inset 3px 0 0 rgba(255,111,145,.46); }
     tr.status-Offer { box-shadow: inset 3px 0 0 rgba(255,230,109,.95); }
+    tr.due-row td {
+      background: rgba(248,199,108,.025);
+    }
+    tr.focus-row td {
+      background: rgba(248,199,108,.16) !important;
+      box-shadow: inset 0 1px 0 rgba(248,199,108,.22), inset 0 -1px 0 rgba(248,199,108,.22);
+      animation: rowFocusPulse 1.1s ease-in-out 2;
+    }
+    tr.focus-row td:first-child {
+      box-shadow: inset 4px 0 0 rgba(248,199,108,.95), inset 0 1px 0 rgba(248,199,108,.22), inset 0 -1px 0 rgba(248,199,108,.22);
+    }
+    @keyframes rowFocusPulse {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.28); }
+    }
     .entry-table td { line-height: 1.45; }
     .entry-table textarea { min-width: 230px; min-height: 76px; font-size: 13px; }
     .entry-table input, .entry-table select { min-width: 130px; min-height: 36px; font-size: 13px; }
@@ -449,10 +475,10 @@
         <h2>Today’s Mission</h2>
         <p>Keep moving. One clean application, one clean follow-up, one real chance at a time.</p>
       </div>
-      <div class="mission-action">
+      <button class="mission-action" id="missionFocusBtn" type="button">
         <span>Next Focus</span>
         <strong id="missionFocus">Review</strong>
-      </div>
+      </button>
     </section>
 
     <div class="tabs" role="tablist">
@@ -636,6 +662,7 @@
     let jobs = JSON.parse(localStorage.getItem(storageKey) || "[]").map(normalizeJob);
     let entryMode = "preview";
     let pendingTravelImage = "";
+    let followFocusIndex = -1;
 
     setDefaultDates();
     document.getElementById("copyBox").textContent = fixedTemplate;
@@ -645,6 +672,7 @@
     document.querySelectorAll(".mode-btn").forEach(button => button.addEventListener("click", () => switchMode(button.dataset.mode)));
     document.getElementById("entrySort").addEventListener("change", render);
     document.getElementById("entrySearch").addEventListener("input", render);
+    document.getElementById("missionFocusBtn").addEventListener("click", focusNextFollowUp);
 
     document.getElementById("travelImage").addEventListener("change", async event => {
       const file = event.target.files[0];
@@ -714,6 +742,10 @@
       document.querySelectorAll(".mode-btn").forEach(button => button.classList.toggle("active", button.dataset.mode === mode));
       renderEntry();
     }
+    function setEntryMode(mode) {
+      entryMode = mode;
+      document.querySelectorAll(".mode-btn").forEach(button => button.classList.toggle("active", button.dataset.mode === mode));
+    }
     function setDefaultDates() {
       const today = new Date();
       const follow = new Date();
@@ -762,8 +794,9 @@
     }
     function render() {
       const today = toDateInput(new Date());
+      autoMarkNoResponse(today);
       document.getElementById("totalApplied").textContent = jobs.length;
-      const needFollow = jobs.filter(job => job.followDate <= today && !["Rejected", "Offer"].includes(job.status)).length;
+      const needFollow = jobs.filter(job => isDue(job)).length;
       const interviews = jobs.filter(job => ["Interview", "Interviewed"].includes(job.status)).length;
       const positives = jobs.filter(job => ["Replied", "Interview", "Interviewed", "Offer"].includes(job.status)).length;
       document.getElementById("needFollow").textContent = needFollow;
@@ -794,15 +827,40 @@
       }
       entryBody.innerHTML = list.map(job => entryMode === "edit" ? rowEdit(job) : rowPreview(job)).join("");
     }
+    function focusNextFollowUp() {
+      const dueJobs = jobs
+        .filter(isDue)
+        .sort((a, b) => a.followDate.localeCompare(b.followDate) || b.appliedDate.localeCompare(a.appliedDate));
+      if (!dueJobs.length) {
+        document.getElementById("missionFocus").textContent = "No Follow Up";
+        setTimeout(render, 850);
+        return;
+      }
+
+      switchTab("entry");
+      setEntryMode("preview");
+      document.getElementById("entrySort").value = "followDate";
+      document.getElementById("entrySearch").value = "";
+      renderEntry();
+
+      followFocusIndex = (followFocusIndex + 1) % dueJobs.length;
+      const targetId = dueJobs[followFocusIndex].id;
+      document.querySelectorAll("tr.focus-row").forEach(row => row.classList.remove("focus-row"));
+      const targetRow = [...document.querySelectorAll("tr[data-job-id]")].find(row => row.dataset.jobId === targetId);
+      if (!targetRow) return;
+      targetRow.classList.add("focus-row");
+      targetRow.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+    }
     function rowPreview(job) {
+      const due = isDue(job);
       return `
-        <tr class="status-${statusClass(job.status)}">
+        <tr class="status-${statusClass(job.status)} ${due ? "due-row" : ""}" data-job-id="${job.id}" data-due="${due}">
           <td>${job.appliedDate}</td>
           <td class="company"><strong>${esc(job.company)}</strong></td>
           <td class="map-cell"><div class="travel-thumb" onclick="openImageModal('${job.id}')">${job.travelImage ? `<img src="${job.travelImage}" alt="Travel map">` : "No map"}</div></td>
           <td class="text-cell"><div class="clip">${esc(job.travelNote || "-")}</div></td>
           <td><span class="tag ${statusClass(job.status)}">${job.status}</span></td>
-          <td class="${isDue(job) ? "due" : ""}">${job.followDate}</td>
+          <td class="${due ? "due" : ""}">${job.followDate}</td>
           <td class="text-cell"><div class="clip">${esc(job.whatsapp || "-")}</div></td>
           <td class="text-cell"><div class="clip">${esc(job.interviewAsk || "-")}</div></td>
           <td class="text-cell"><div class="clip">${esc(job.response || "-")}</div></td>
@@ -813,8 +871,9 @@
       `;
     }
     function rowEdit(job) {
+      const due = isDue(job);
       return `
-        <tr class="status-${statusClass(job.status)}">
+        <tr class="status-${statusClass(job.status)} ${due ? "due-row" : ""}" data-job-id="${job.id}" data-due="${due}">
           <td><input type="date" value="${job.appliedDate}" onchange="updateJob('${job.id}', 'appliedDate', this.value)"></td>
           <td class="company"><strong>${esc(job.company)}</strong></td>
           <td class="map-cell">
@@ -824,7 +883,7 @@
           </td>
           <td><textarea onchange="updateJob('${job.id}', 'travelNote', this.value)">${esc(job.travelNote)}</textarea></td>
           <td>${inlineSelect(job.id, "status", job.status, statusOptions)}</td>
-          <td><input type="date" value="${job.followDate}" onchange="updateJob('${job.id}', 'followDate', this.value)"></td>
+          <td><input class="${due ? "due" : ""}" type="date" value="${job.followDate}" onchange="updateJob('${job.id}', 'followDate', this.value)"></td>
           <td><textarea onchange="updateJob('${job.id}', 'whatsapp', this.value)">${esc(job.whatsapp)}</textarea></td>
           <td><textarea onchange="updateJob('${job.id}', 'interviewAsk', this.value)">${esc(job.interviewAsk)}</textarea></td>
           <td><textarea onchange="updateJob('${job.id}', 'response', this.value)">${esc(job.response)}</textarea></td>
@@ -999,6 +1058,19 @@
       if (status.includes("replied") || status.includes("response")) return "Replied";
       return "Applied";
     }
+    function autoMarkNoResponse(today) {
+      let changed = false;
+      jobs = jobs.map(job => {
+        if (job.status === "Applied" && job.followDate && job.followDate < today) {
+          changed = true;
+          return { ...job, status: "No Response" };
+        }
+        return job;
+      });
+      if (changed) {
+        localStorage.setItem(storageKey, JSON.stringify(jobs));
+      }
+    }
     function copyJobTemplate(id) {
       const job = jobs.find(item => item.id === id);
       const text = job ? fixedTemplate
@@ -1033,7 +1105,7 @@
     }
     function closeImageModal() { document.getElementById("imageModal").classList.remove("open"); }
     function statusClass(status) { return status.replace(/\s/g, ""); }
-    function isDue(job) { return job.followDate <= toDateInput(new Date()) && !["Rejected", "Offer"].includes(job.status); }
+    function isDue(job) { return job.followDate <= toDateInput(new Date()) && !["No Response", "Rejected", "Offer"].includes(job.status); }
     function flashButton(id, text) {
       const button = document.getElementById(id);
       const original = button.textContent;
