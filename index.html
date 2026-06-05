@@ -498,7 +498,8 @@
               <select id="entrySort">
                 <option value="appliedDesc">Newest applied date</option>
                 <option value="status">Status</option>
-                <option value="followDate">Follow-up date</option>
+                <option value="followDate">Latest follow-up date</option>
+                <option value="lastEdited">Last edited</option>
               </select>
             </label>
             <label>Search
@@ -770,9 +771,11 @@ Looi Jia Jun`;
     }
     function toDateInput(date) { return date.toISOString().slice(0, 10); }
     function normalizeJob(job) {
+      const createdAt = job.createdAt || new Date().toISOString();
       return {
         id: job.id || crypto.randomUUID(),
-        createdAt: job.createdAt || new Date().toISOString(),
+        createdAt,
+        lastEdited: job.lastEdited || createdAt,
         appliedDate: job.appliedDate || toDateInput(new Date()),
         company: job.company || "",
         position: job.position || "",
@@ -832,7 +835,8 @@ Looi Jia Jun`;
         .filter(job => [job.company, job.position, job.platform, job.status, job.response, job.travelNote].join(" ").toLowerCase().includes(query))
         .sort((a, b) => {
           if (sort === "status") return a.status.localeCompare(b.status) || b.appliedDate.localeCompare(a.appliedDate);
-          if (sort === "followDate") return Number(isDue(b)) - Number(isDue(a)) || a.followDate.localeCompare(b.followDate);
+          if (sort === "followDate") return b.followDate.localeCompare(a.followDate) || b.appliedDate.localeCompare(a.appliedDate);
+          if (sort === "lastEdited") return (b.lastEdited || b.createdAt).localeCompare(a.lastEdited || a.createdAt) || b.createdAt.localeCompare(a.createdAt);
           return b.appliedDate.localeCompare(a.appliedDate);
         });
     }
@@ -943,7 +947,8 @@ Looi Jia Jun`;
       return `<select onchange="updateJob('${id}', '${key}', this.value)">${options.map(option => `<option ${option === value ? "selected" : ""}>${option}</option>`).join("")}</select>`;
     }
     function updateJob(id, key, value) {
-      jobs = jobs.map(job => job.id === id ? { ...job, [key]: value } : job);
+      const editedAt = new Date().toISOString();
+      jobs = jobs.map(job => job.id === id ? { ...job, [key]: value, lastEdited: editedAt } : job);
       localStorage.setItem(storageKey, JSON.stringify(jobs));
       render();
     }
