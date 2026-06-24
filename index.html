@@ -656,7 +656,7 @@
                   <label>OpenRouter API Key
                     <input id="geminiApiKey" type="password" placeholder="sk-or-v1-..." autocomplete="off">
                   </label>
-                  <small>Paste your Google AI Studio key here. It stays in the browser and is never hard-coded into the page.</small>
+                  <small>Paste your OpenRouter key here. It stays in the browser and is never hard-coded into the page.</small>
                 </div>
                 <textarea id="aiOutput" style="min-height:180px;" placeholder="Paste full job description here..."></textarea>
                 <div class="parser-status" id="parserStatus" data-tone="idle">
@@ -706,7 +706,7 @@
     const storageKey = "zijun-job-hunt";
     const statusOptions = ["Applied", "No Response", "Replied", "Interview", "Interviewed", "Rejected", "Offer"];
     const platformOptions = ["JobStreet", "LinkedIn", "Indeed", "Facebook", "WhatsApp", "Walk-in", "Friend Intro", "Other"];
-    const geminiModel = "gemini-2.0-flash";
+    const geminiModel = "cohere/north-mini-code:free";
     const fixedTemplate = `Help me write job application follow-up content based on this table.
 
 | Field | Fill In |
