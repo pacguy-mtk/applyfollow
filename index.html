@@ -740,11 +740,15 @@ Looi Jia Jun`;
     const parserStatusText = document.getElementById("parserStatusText");
     const parserSpinner = document.getElementById("parserSpinner");
     const geminiApiKeyInput = document.getElementById("geminiApiKey");
+    const settingsKey = "zijun-job-hunt-settings";
     let jobs = JSON.parse(localStorage.getItem(storageKey) || "[]").map(normalizeJob);
     let entryMode = "preview";
     let pendingTravelImage = "";
     let lastParsedSemantic = null;
     let followFocusIndex = -1;
+    let settings = loadSettings();
+
+    geminiApiKeyInput.value = settings.geminiApiKey || "";
 
     setDefaultDates();
     document.getElementById("copyBox").textContent = fixedTemplate;
@@ -783,6 +787,10 @@ Looi Jia Jun`;
     document.getElementById("copyTemplateBtn").addEventListener("click", async () => {
       await navigator.clipboard.writeText(fixedTemplate);
       flashButton("copyTemplateBtn", "Copied");
+    });
+    geminiApiKeyInput.addEventListener("input", () => {
+      settings.geminiApiKey = geminiApiKeyInput.value.trim();
+      saveSettings();
     });
     document.getElementById("parseAiBtn").addEventListener("click", () => parseAiOutput(false));
     document.getElementById("addParsedBtn").addEventListener("click", () => parseAiOutput(true));
@@ -846,7 +854,18 @@ Looi Jia Jun`;
       document.getElementById("appliedDate").value = toDateInput(today);
       document.getElementById("followDate").value = toDateInput(follow);
     }
-    function toDateInput(date) { return date.toISOString().slice(0, 10); }
+    function toDateInput(date, timeZone = "Asia/Kuala_Lumpur") {
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(date);
+      const year = parts.find(part => part.type === "year")?.value || "0000";
+      const month = parts.find(part => part.type === "month")?.value || "01";
+      const day = parts.find(part => part.type === "day")?.value || "01";
+      return `${year}-${month}-${day}`;
+    }
     function normalizeList(value) {
       if (Array.isArray(value)) {
         return value.map(item => String(item || "").trim()).filter(Boolean);
@@ -858,6 +877,16 @@ Looi Jia Jun`;
     }
     function listToText(value) {
       return normalizeList(value).join("\n");
+    }
+    function loadSettings() {
+      try {
+        return JSON.parse(localStorage.getItem(settingsKey) || "{}") || {};
+      } catch {
+        return {};
+      }
+    }
+    function saveSettings() {
+      localStorage.setItem(settingsKey, JSON.stringify(settings));
     }
     function setParserStatus(message, tone = "idle", busy = false) {
       parserStatus.dataset.tone = tone;
@@ -1086,24 +1115,6 @@ Looi Jia Jun`;
         save();
       }
     }
-    function buildGeminiPrompt(text) {
-      return `You are a job description parser. Extract the following fields from the job description below and return a valid JSON object ONLY. Do not add any extra text.
-
-Fields:
-- company (string or null)
-- title (string or null)
-- location (string or null)
-- job_type (string or null)
-- salary (string or null)
-- responsibilities (array of strings)
-- requirements (array of strings)
-- benefits (array of strings)
-
-If a field is not mentioned, set it to null for strings or an empty array for arrays.
-
-Job description:
-${text}`;
-    }
     function extractJsonObject(value) {
       const text = String(value || "").trim();
       if (!text) return null;
@@ -1157,6 +1168,16 @@ ${text}`;
         .map(line => line.replace(/^\s*(?:[-*]|\u2022|\d+[.)])\s*/, "").trim())
         .filter(Boolean);
     }
+    function cleanSection(value) {
+      return String(value || "")
+        .replace(/\r/g, "")
+        .replace(/^>\s?/gm, "")
+        .replace(/^[-*_]+\s*$/gm, "")
+        .replace(/^#+\s*/gm, "")
+        .replace(/\*\*/g, "")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .trim();
+    }
     function firstMatch(text, patterns) {
       for (const pattern of patterns) {
         const match = String(text || "").match(pattern);
@@ -1164,66 +1185,105 @@ ${text}`;
       }
       return "";
     }
+    function getTableValue(text, field) {
+      const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const boldPattern = new RegExp(`\\|\\s*\\*\\*${escaped}\\*\\*\\s*\\|\\s*([^|]+?)\\s*\\|`, "i");
+      const plainPattern = new RegExp(`\\|\\s*${escaped}\\s*\\|\\s*([^|]+?)\\s*\\|`, "i");
+      const colonPattern = new RegExp(`${escaped}\\s*:\\s*(.+)`, "i");
+      return (String(text || "").match(boldPattern)?.[1] || String(text || "").match(plainPattern)?.[1] || String(text || "").match(colonPattern)?.[1] || "").trim();
+    }
+    function buildGeminiPrompt(text) {
+      return `You are a job application parser. Extract the information from the pasted content and return a valid JSON object ONLY. Do not add any extra text.
+
+Prefer the table under "Job Application Follow-Up Tracker & Content" when present.
+
+Return these keys:
+- appliedDate: string or null
+- company: string or null
+- position: string or null
+- platform: string or null
+- status: string or null
+- followDate: string or null
+- whatsapp: string or null
+- followupPm: string or null
+- interviewAsk: string or null
+- response: string or null
+- travelNote: string or null
+
+Rules:
+- Normalize dates to YYYY-MM-DD when possible.
+- Normalize status to one of: Applied, No Response, Replied, Interview, Interviewed, Rejected, Offer.
+- If a field is not present, use null.
+- If the content includes "Questions to ask before interview", put that text in whatsapp.
+- If it includes "Short Application Message" or a follow-up message, put that text in followupPm.
+- If it includes "Interview questions I should ask", put that text in interviewAsk.
+
+Pasted content:
+${text}`;
+    }
     function fallbackParseJobDescription(text) {
       const jobText = String(text || "");
       const lower = jobText.toLowerCase();
-      const title = firstMatch(jobText, [
-        /(?:we are looking for|we're looking for|looking for|hiring for|join our team as|role:|position:|title:)\s*(?:an?\s+)?([^\n,.]+)/i
-      ]) || firstMatch(jobText, [
-        /(?:for the|for a|for an)\s+([^\n,.]+?)(?:\s+role|\s+position|\s+opening|\s+job|\s+in\b|$)/i
+      const appliedDate = parseDateFromText(getTableValue(jobText, "Applied date"));
+      const company = getTableValue(jobText, "Company") || firstMatch(jobText, [
+        /(?:company|employer|organization|organization name)\s*:\s*([^\n]+)/i
       ]);
-      const company = firstMatch(jobText, [
-        /(?:company|employer|organization|organization name)\s*:\s*([^\n]+)/i,
-        /(?:at|with)\s+([A-Z][A-Za-z0-9&.,'\- ]{2,80})/i
+      const position = getTableValue(jobText, "Position") || firstMatch(jobText, [
+        /(?:position|title|role)\s*:\s*([^\n]+)/i,
+        /(?:we are looking for|we're looking for|looking for|hiring for|join our team as|for the|for a|for an)\s+([^\n,.]+)/i
       ]);
-      const location = firstMatch(jobText, [
-        /(?:location|based in|located in)\s*:\s*([^\n]+)/i,
-        /\bin\s+([A-Z][A-Za-z0-9&.,'\-/ ]{2,80})/i
+      const platform = getTableValue(jobText, "Platform") || firstMatch(jobText, [
+        /\b(JobStreet|LinkedIn|Indeed|Facebook|WhatsApp|Walk-in|Friend Intro|Other)\b/i
       ]);
-      const jobType = firstMatch(jobText, [
-        /\b(full[- ]time|part[- ]time|contract|internship|temporary|freelance)\b/i
+      const status = getTableValue(jobText, "Current status") || firstMatch(jobText, [
+        /\b(Applied|No Response|Replied|Interview|Interviewed|Rejected|Offer|Interview Scheduled)\b/i
       ]);
-      const salary = firstMatch(jobText, [
-        /(?:salary|compensation|pay|remuneration)\s*:\s*([^\n]+)/i,
-        /(RM\s?[\d,]+(?:\s*-\s*RM?\s?[\d,]+)?(?:\s*(?:per|\/)\s*(?:month|year|annum))?)/i,
-        /(MYR\s?[\d,]+(?:\s*-\s*MYR?\s?[\d,]+)?)/i,
-        /(USD\s?[\d,]+(?:\s*-\s*USD?\s?[\d,]+)?)/i
-      ]);
-      const responsibilities = sectionToList(findSection(jobText, [
-        "responsibilities",
-        "what you'll do",
-        "what you will do",
-        "duties",
-        "key responsibilities",
-        "job scope",
-        "about the role"
+      const followDate = parseDateFromText(getTableValue(jobText, "Follow Up Date") || getTableValue(jobText, "Follow-up Date"));
+      const whatsapp = cleanSection(findSection(jobText, [
+        "Questions To Ask Before Interview",
+        "Questions to ask before interview",
+        "Questions Before Interview",
+        "Before Interview",
+        "Pre-Interview"
       ]));
-      const requirements = sectionToList(findSection(jobText, [
-        "requirements",
-        "qualifications",
-        "what we're looking for",
-        "what you will need",
-        "must have",
-        "preferred qualifications",
-        "you have"
+      const followupPm = cleanSection(findSection(jobText, [
+        "Short Application Message",
+        "Follow-up PM",
+        "Follow Up PM",
+        "Follow-up Message",
+        "Follow Up Message",
+        "Follow-up"
       ]));
-      const benefits = sectionToList(findSection(jobText, [
-        "benefits",
-        "we offer",
-        "what we offer",
-        "perks",
-        "why join us",
-        "our perks"
+      const interviewAsk = cleanSection(findSection(jobText, [
+        "Interview questions I should ask",
+        "Interview Questions You Should Ask",
+        "Interview Questions",
+        "Questions You Should Ask"
+      ]));
+      const response = cleanSection(findSection(jobText, [
+        "Response / Notes",
+        "Response",
+        "Reply",
+        "HR Reply"
+      ]));
+      const travelNote = cleanSection(findSection(jobText, [
+        "Commute Risk",
+        "Travel Note",
+        "Commute",
+        "Location / Commute"
       ]));
       return {
+        appliedDate,
         company,
-        title: title || firstMatch(jobText, [/^([A-Z][^\n]{3,80})$/m]),
-        location,
-        job_type: jobType || (lower.includes("remote") ? "Remote" : lower.includes("hybrid") ? "Hybrid" : ""),
-        salary,
-        responsibilities,
-        requirements,
-        benefits
+        position,
+        platform: normalizePlatform(platform),
+        status: normalizeStatus(status),
+        followDate: followDate || (appliedDate ? addWorkingDays(appliedDate, 3) : ""),
+        whatsapp,
+        followupPm,
+        interviewAsk,
+        response,
+        travelNote
       };
     }
     function normalizeSemanticParse(raw, sourceText) {
@@ -1233,14 +1293,17 @@ ${text}`;
         return text || String(fallbackValue ?? "").trim();
       };
       return {
+        appliedDate: parseDateFromText(pick(raw?.appliedDate, fallback.appliedDate)),
         company: pick(raw?.company, fallback.company),
-        title: pick(raw?.title, fallback.title),
-        location: pick(raw?.location, fallback.location),
-        jobType: pick(raw?.job_type ?? raw?.jobType, fallback.job_type),
-        salary: pick(raw?.salary, fallback.salary),
-        responsibilities: normalizeList(raw?.responsibilities?.length ? raw.responsibilities : fallback.responsibilities),
-        requirements: normalizeList(raw?.requirements?.length ? raw.requirements : fallback.requirements),
-        benefits: normalizeList(raw?.benefits?.length ? raw.benefits : fallback.benefits),
+        position: pick(raw?.position ?? raw?.title, fallback.position),
+        platform: normalizePlatform(pick(raw?.platform, fallback.platform)),
+        status: normalizeStatus(pick(raw?.status, fallback.status)),
+        followDate: parseDateFromText(pick(raw?.followDate, fallback.followDate)),
+        whatsapp: cleanSection(pick(raw?.whatsapp, fallback.whatsapp)),
+        followupPm: cleanSection(pick(raw?.followupPm, fallback.followupPm)),
+        interviewAsk: cleanSection(pick(raw?.interviewAsk, fallback.interviewAsk)),
+        response: cleanSection(pick(raw?.response, fallback.response)),
+        travelNote: cleanSection(pick(raw?.travelNote, fallback.travelNote)),
         semanticSource: raw?.semanticSource || "gemini"
       };
     }
@@ -1278,24 +1341,41 @@ ${text}`;
       const semantic = normalizeSemanticParse(parsed, sourceText);
       const companyInput = document.getElementById("company");
       const positionInput = document.getElementById("position");
+      const appliedDateInput = document.getElementById("appliedDate");
+      const platformInput = document.getElementById("platform");
+      const statusInput = document.getElementById("status");
+      const followDateInput = document.getElementById("followDate");
+      const whatsappInput = document.getElementById("whatsapp");
+      const followupPmInput = document.getElementById("followupPm");
+      const interviewAskInput = document.getElementById("interviewAsk");
+      const responseInput = document.getElementById("response");
+      const travelNoteInput = document.getElementById("travelNote");
 
-      if (semantic.company) companyInput.value = semantic.company;
-      if (semantic.title) positionInput.value = semantic.title;
-      lastParsedSemantic = {
-        location: semantic.location,
-        jobType: semantic.jobType,
-        salary: semantic.salary,
-        responsibilities: semantic.responsibilities,
-        requirements: semantic.requirements,
-        benefits: semantic.benefits,
-        semanticSource: semantic.semanticSource
-      };
-
-      if (!document.getElementById("followupPm").value.trim()) {
-        document.getElementById("followupPm").value = followUpPm(getFormData());
+      if (semantic.appliedDate) {
+        appliedDateInput.value = semantic.appliedDate;
+      } else if (!appliedDateInput.value) {
+        appliedDateInput.value = toDateInput(new Date());
       }
-      if (!document.getElementById("followDate").value) {
-        document.getElementById("followDate").value = addWorkingDays(document.getElementById("appliedDate").value || toDateInput(new Date()), 3);
+      if (semantic.company) companyInput.value = semantic.company;
+      if (semantic.position) positionInput.value = semantic.position;
+      if (semantic.platform) platformInput.value = semantic.platform;
+      if (semantic.status) statusInput.value = semantic.status;
+      if (semantic.followDate) {
+        followDateInput.value = semantic.followDate;
+      } else if (semantic.appliedDate) {
+        followDateInput.value = addWorkingDays(semantic.appliedDate, 3);
+      }
+      if (semantic.whatsapp) whatsappInput.value = semantic.whatsapp;
+      if (semantic.followupPm) followupPmInput.value = semantic.followupPm;
+      if (semantic.interviewAsk) interviewAskInput.value = semantic.interviewAsk;
+      if (semantic.response) responseInput.value = semantic.response;
+      if (semantic.travelNote) travelNoteInput.value = semantic.travelNote;
+
+      if (!followupPmInput.value.trim()) {
+        followupPmInput.value = followUpPm(getFormData());
+      }
+      if (!followDateInput.value && appliedDateInput.value) {
+        followDateInput.value = addWorkingDays(appliedDateInput.value, 3);
       }
       return semantic;
     }
@@ -1308,17 +1388,17 @@ ${text}`;
 
       const apiKey = geminiApiKeyInput.value.trim();
       let semantic = null;
-      setParserStatus(apiKey ? "Sending the prompt to Gemini..." : "No API key set. Using the fallback parser to fill Quick Add Job.", apiKey ? "busy" : "warning", apiKey.length > 0);
+      setParserStatus(apiKey ? "Sending the prompt to Gemini..." : "No API key set. Using the table parser to fill Quick Add Job.", apiKey ? "busy" : "warning", apiKey.length > 0);
 
       try {
         semantic = apiKey ? await parseWithGemini(text, apiKey) : normalizeSemanticParse(fallbackParseJobDescription(text), text);
         applySemanticParse(semantic, text);
-        setParserStatus(apiKey ? "Quick Add Job filled from Gemini." : "Fallback parser filled Quick Add Job.", apiKey ? "success" : "warning", false);
+        setParserStatus(apiKey ? "Quick Add Job filled from Gemini." : "Table parser filled Quick Add Job.", apiKey ? "success" : "warning", false);
       } catch (error) {
         console.error(error);
         semantic = normalizeSemanticParse(fallbackParseJobDescription(text), text);
         applySemanticParse(semantic, text);
-        setParserStatus("Gemini parse failed, so the fallback parser filled Quick Add Job.", "warning", false);
+        setParserStatus("Gemini parse failed, so the table parser filled Quick Add Job.", "warning", false);
       }
 
       if (shouldAdd) {
@@ -1388,6 +1468,7 @@ ${text}`;
       if (status.includes("offer")) return "Offer";
       if (status.includes("reject")) return "Rejected";
       if (status.includes("applied")) return "Applied";
+      if (status.includes("schedule") || status.includes("scheduled") || status.includes("pending visit")) return "Interview";
       if (status.includes("interviewed")) return "Interviewed";
       if (status.includes("interview")) return "Interview";
       if (status.includes("no response")) return "No Response";
