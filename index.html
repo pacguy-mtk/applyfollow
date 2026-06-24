@@ -301,7 +301,7 @@
       border-collapse: collapse;
       font-size: 14px;
     }
-    .entry-table { min-width: 1860px; }
+    .entry-table { min-width: 1740px; }
     .workspace-table { min-width: 1120px; font-size: 13px; }
     th, td {
       padding: 12px 13px;
@@ -385,53 +385,6 @@
       line-height: 1.35;
     }
     .paste-zone:focus { outline: none; border-color: rgba(66,232,212,.72); }
-    .semantic-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .semantic-grid .wide {
-      grid-column: 1 / -1;
-    }
-    .semantic-summary {
-      display: grid;
-      gap: 6px;
-      padding: 10px 12px;
-      border: 1px solid rgba(66,232,212,.15);
-      border-radius: 10px;
-      background: rgba(66,232,212,.045);
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-    .semantic-summary strong {
-      color: var(--text);
-      font-size: 13px;
-    }
-    .semantic-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      min-height: 24px;
-      border-radius: 999px;
-      padding: 0 9px;
-      background: rgba(255,255,255,.06);
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 850;
-      white-space: nowrap;
-    }
-    .semantic-cell {
-      min-width: 220px;
-    }
-    .semantic-stack {
-      display: grid;
-      gap: 6px;
-    }
-    .semantic-stack input {
-      min-height: 32px;
-      font-size: 12px;
-    }
     .parser-toolbar {
       display: grid;
       gap: 10px;
@@ -535,7 +488,6 @@
     @media (max-width: 980px) {
       .topbar, .entry-tools { align-items: flex-start; flex-direction: column; }
       .metrics, .workspace-grid { grid-template-columns: 1fr; }
-      .semantic-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 620px) {
       .shell { width: min(100vw - 22px, 1260px); }
@@ -632,7 +584,6 @@
                   <th>Response</th>
                   <th>Platform</th>
                   <th>Position</th>
-                  <th>Semantic</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -675,20 +626,6 @@
                 <label>Follow-up PM<textarea id="followupPm" placeholder="AI parser fills this if it finds a Follow-up message. Otherwise the system uses the default PM."></textarea></label>
                 <label>Interview Questions / Notes<textarea id="interviewAsk" placeholder="Paste AI generated interview questions here."></textarea></label>
                 <label>Response / Notes<textarea id="response" placeholder="No response yet, HR replied, interview time, etc."></textarea></label>
-                <section class="card" style="padding:12px;">
-                  <div class="panel-head" style="padding:0 0 10px;">
-                    <h2>Semantic Details</h2>
-                    <p>Filled by Gemini when you parse a job description. Use these fields to store the structured result.</p>
-                  </div>
-                  <div class="semantic-grid">
-                    <label>Location<input id="location" placeholder="Kuala Lumpur, Remote, Hybrid..."></label>
-                    <label>Job Type<input id="jobType" placeholder="Full-time, Contract, Internship..."></label>
-                    <label>Salary<input id="salary" placeholder="RM 8,000 - RM 12,000"></label>
-                    <label class="wide">Responsibilities<textarea id="responsibilities" placeholder="One responsibility per line."></textarea></label>
-                    <label class="wide">Requirements<textarea id="requirements" placeholder="One requirement per line."></textarea></label>
-                    <label class="wide">Benefits<textarea id="benefits" placeholder="One benefit per line."></textarea></label>
-                  </div>
-                </section>
                 <label>Travel Map Image<input id="travelImage" type="file" accept="image/*"></label>
                 <div class="paste-zone" id="travelPasteZone" tabindex="0">Click here and paste map screenshot from clipboard.</div>
                 <label>Travel Note<textarea id="travelNote" placeholder="Distance, transport, parking, too far, acceptable if hybrid..."></textarea></label>
@@ -712,7 +649,7 @@
             <section class="card">
               <div class="panel-head">
                 <h2>Semantic Job Parser</h2>
-                <p>Paste a job description. Gemini extracts company, title, location, type, salary, responsibilities, requirements, and benefits into the form.</p>
+                <p>Paste a job description. Gemini fills the Quick Add Job fields directly, then keeps any extra extracted details behind the scenes.</p>
               </div>
               <div class="stack parser-toolbar">
                 <div class="api-key-row">
@@ -769,7 +706,6 @@
     const storageKey = "zijun-job-hunt";
     const statusOptions = ["Applied", "No Response", "Replied", "Interview", "Interviewed", "Rejected", "Offer"];
     const platformOptions = ["JobStreet", "LinkedIn", "Indeed", "Facebook", "WhatsApp", "Walk-in", "Friend Intro", "Other"];
-    const semanticKeys = ["location", "jobType", "salary", "responsibilities", "requirements", "benefits"];
     const geminiModel = "gemini-2.0-flash";
     const fixedTemplate = `Help me write job application follow-up content based on this table.
 
@@ -807,6 +743,7 @@ Looi Jia Jun`;
     let jobs = JSON.parse(localStorage.getItem(storageKey) || "[]").map(normalizeJob);
     let entryMode = "preview";
     let pendingTravelImage = "";
+    let lastParsedSemantic = null;
     let followFocusIndex = -1;
 
     setDefaultDates();
@@ -838,6 +775,7 @@ Looi Jia Jun`;
       save();
       form.reset();
       pendingTravelImage = "";
+      lastParsedSemantic = null;
       updatePasteZone();
       setDefaultDates();
     });
@@ -851,7 +789,13 @@ Looi Jia Jun`;
     document.getElementById("copyParsedPmBtn").addEventListener("click", copyParsedFollowUpPm);
     document.getElementById("clearParserBtn").addEventListener("click", () => {
       document.getElementById("aiOutput").value = "";
+      lastParsedSemantic = null;
       setParserStatus("Ready to parse a job description.", "idle", false);
+    });
+    ["appliedDate","platform","company","position","status","followDate","whatsapp","followupPm","interviewAsk","response","travelNote"].forEach(id => {
+      document.getElementById(id).addEventListener("input", () => {
+        if (lastParsedSemantic) lastParsedSemantic = null;
+      });
     });
 
     document.getElementById("exportBtn").addEventListener("click", () => {
@@ -915,25 +859,6 @@ Looi Jia Jun`;
     function listToText(value) {
       return normalizeList(value).join("\n");
     }
-    function semanticCounts(job) {
-      return {
-        responsibilities: normalizeList(job.responsibilities).length,
-        requirements: normalizeList(job.requirements).length,
-        benefits: normalizeList(job.benefits).length
-      };
-    }
-    function semanticSummary(job) {
-      const parts = [];
-      const hasAny = Boolean(job.location || job.jobType || job.salary || normalizeList(job.responsibilities).length || normalizeList(job.requirements).length || normalizeList(job.benefits).length);
-      if (job.location) parts.push(job.location);
-      if (job.jobType) parts.push(job.jobType);
-      if (job.salary) parts.push(job.salary);
-      const counts = semanticCounts(job);
-      parts.push(`R${counts.responsibilities}`);
-      parts.push(`Req${counts.requirements}`);
-      parts.push(`B${counts.benefits}`);
-      return hasAny ? parts : ["No semantic data yet"];
-    }
     function setParserStatus(message, tone = "idle", busy = false) {
       parserStatus.dataset.tone = tone;
       parserStatusText.textContent = message;
@@ -955,14 +880,14 @@ Looi Jia Jun`;
         followupPm: job.followupPm || job.followUpPm || "",
         interviewAsk: job.interviewAsk || "",
         response: job.response || "",
+        travelImage: job.travelImage || "",
+        travelNote: job.travelNote || "",
         location: job.location || "",
         jobType: job.jobType || job.job_type || "",
         salary: job.salary || "",
         responsibilities: normalizeList(job.responsibilities || job.responsibility || ""),
         requirements: normalizeList(job.requirements || ""),
         benefits: normalizeList(job.benefits || ""),
-        travelImage: job.travelImage || "",
-        travelNote: job.travelNote || "",
         semanticSource: job.semanticSource || ""
       };
     }
@@ -980,14 +905,9 @@ Looi Jia Jun`;
         followupPm: document.getElementById("followupPm").value.trim(),
         interviewAsk: document.getElementById("interviewAsk").value.trim(),
         response: document.getElementById("response").value.trim(),
-        location: document.getElementById("location").value.trim(),
-        jobType: document.getElementById("jobType").value.trim(),
-        salary: document.getElementById("salary").value.trim(),
-        responsibilities: normalizeList(document.getElementById("responsibilities").value),
-        requirements: normalizeList(document.getElementById("requirements").value),
-        benefits: normalizeList(document.getElementById("benefits").value),
         travelImage: pendingTravelImage,
-        travelNote: document.getElementById("travelNote").value.trim()
+        travelNote: document.getElementById("travelNote").value.trim(),
+        ...(lastParsedSemantic || {})
       });
     }
     function save() {
@@ -1038,7 +958,7 @@ Looi Jia Jun`;
     function renderEntry() {
       const list = filteredJobs();
       if (!list.length) {
-        entryBody.innerHTML = `<tr><td colspan="14" class="empty">No job records yet. Go Workspace, paste a job description or quick add your first application.</td></tr>`;
+        entryBody.innerHTML = `<tr><td colspan="13" class="empty">No job records yet. Go Workspace, paste a job description or quick add your first application.</td></tr>`;
         return;
       }
       entryBody.innerHTML = list.map(job => entryMode === "edit" ? rowEdit(job) : rowPreview(job)).join("");
@@ -1069,7 +989,6 @@ Looi Jia Jun`;
     }
     function rowPreview(job) {
       const due = isDue(job);
-      const semantic = semanticSummary(job).join(" | ");
       return `
         <tr class="status-${statusClass(job.status)} ${due ? "due-row" : ""}" data-job-id="${job.id}" data-due="${due}">
           <td>${job.appliedDate}</td>
@@ -1084,14 +1003,12 @@ Looi Jia Jun`;
           <td class="text-cell"><div class="clip">${esc(job.response || "-")}</div></td>
           <td>${esc(job.platform)}</td>
           <td class="position">${esc(job.position)}</td>
-          <td class="text-cell"><div class="clip">${esc(semantic)}</div></td>
           <td><button class="small-btn" onclick="copyJobTemplate('${job.id}')">AI</button></td>
         </tr>
       `;
     }
     function rowEdit(job) {
       const due = isDue(job);
-      const semantic = semanticSummary(job).join(" | ");
       return `
         <tr class="status-${statusClass(job.status)} ${due ? "due-row" : ""}" data-job-id="${job.id}" data-due="${due}">
           <td><input type="date" value="${job.appliedDate}" onchange="updateJob('${job.id}', 'appliedDate', this.value)"></td>
@@ -1110,14 +1027,6 @@ Looi Jia Jun`;
           <td><textarea onchange="updateJob('${job.id}', 'response', this.value)">${esc(job.response)}</textarea></td>
           <td>${esc(job.platform)}</td>
           <td class="position">${esc(job.position)}</td>
-          <td class="semantic-cell">
-            <div class="semantic-stack">
-              <input value="${escAttr(job.location)}" placeholder="Location" onchange="updateJob('${job.id}', 'location', this.value)">
-              <input value="${escAttr(job.jobType)}" placeholder="Job type" onchange="updateJob('${job.id}', 'jobType', this.value)">
-              <input value="${escAttr(job.salary)}" placeholder="Salary" onchange="updateJob('${job.id}', 'salary', this.value)">
-              <span class="semantic-pill">${esc(semantic)}</span>
-            </div>
-          </td>
           <td>
             <button class="small-btn" onclick="copyJobTemplate('${job.id}')">AI</button>
             <button class="small-btn delete" onclick="removeJob('${job.id}')">X</button>
@@ -1369,21 +1278,18 @@ ${text}`;
       const semantic = normalizeSemanticParse(parsed, sourceText);
       const companyInput = document.getElementById("company");
       const positionInput = document.getElementById("position");
-      const locationInput = document.getElementById("location");
-      const jobTypeInput = document.getElementById("jobType");
-      const salaryInput = document.getElementById("salary");
-      const responsibilitiesInput = document.getElementById("responsibilities");
-      const requirementsInput = document.getElementById("requirements");
-      const benefitsInput = document.getElementById("benefits");
 
       if (semantic.company) companyInput.value = semantic.company;
       if (semantic.title) positionInput.value = semantic.title;
-      locationInput.value = semantic.location;
-      jobTypeInput.value = semantic.jobType;
-      salaryInput.value = semantic.salary;
-      responsibilitiesInput.value = listToTextarea(semantic.responsibilities);
-      requirementsInput.value = listToTextarea(semantic.requirements);
-      benefitsInput.value = listToTextarea(semantic.benefits);
+      lastParsedSemantic = {
+        location: semantic.location,
+        jobType: semantic.jobType,
+        salary: semantic.salary,
+        responsibilities: semantic.responsibilities,
+        requirements: semantic.requirements,
+        benefits: semantic.benefits,
+        semanticSource: semantic.semanticSource
+      };
 
       if (!document.getElementById("followupPm").value.trim()) {
         document.getElementById("followupPm").value = followUpPm(getFormData());
@@ -1402,17 +1308,17 @@ ${text}`;
 
       const apiKey = geminiApiKeyInput.value.trim();
       let semantic = null;
-      setParserStatus(apiKey ? "Sending the prompt to Gemini..." : "No API key set. Using the fallback parser.", apiKey ? "busy" : "warning", apiKey.length > 0);
+      setParserStatus(apiKey ? "Sending the prompt to Gemini..." : "No API key set. Using the fallback parser to fill Quick Add Job.", apiKey ? "busy" : "warning", apiKey.length > 0);
 
       try {
         semantic = apiKey ? await parseWithGemini(text, apiKey) : normalizeSemanticParse(fallbackParseJobDescription(text), text);
         applySemanticParse(semantic, text);
-        setParserStatus(`Parsed ${semantic.title || "the job"}${semantic.company ? ` for ${semantic.company}` : ""}.`, apiKey ? "success" : "warning", false);
+        setParserStatus(apiKey ? "Quick Add Job filled from Gemini." : "Fallback parser filled Quick Add Job.", apiKey ? "success" : "warning", false);
       } catch (error) {
         console.error(error);
         semantic = normalizeSemanticParse(fallbackParseJobDescription(text), text);
         applySemanticParse(semantic, text);
-        setParserStatus("Gemini could not parse automatically, so the fallback parser filled what it could.", "warning", false);
+        setParserStatus("Gemini parse failed, so the fallback parser filled Quick Add Job.", "warning", false);
       }
 
       if (shouldAdd) {
