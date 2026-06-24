@@ -649,12 +649,12 @@
             <section class="card">
               <div class="panel-head">
                 <h2>Semantic Job Parser</h2>
-                <p>Paste a job description. Gemini fills the Quick Add Job fields directly, then keeps any extra extracted details behind the scenes.</p>
+                <p>Paste a job description. OpenRouter fills the Quick Add Job fields directly, then keeps any extra extracted details behind the scenes.</p>
               </div>
               <div class="stack parser-toolbar">
                 <div class="api-key-row">
-                  <label>Gemini API Key
-                    <input id="geminiApiKey" type="password" placeholder="YOUR_API_KEY" autocomplete="off">
+                  <label>OpenRouter API Key
+                    <input id="geminiApiKey" type="password" placeholder="sk-or-v1-..." autocomplete="off">
                   </label>
                   <small>Paste your Google AI Studio key here. It stays in the browser and is never hard-coded into the page.</small>
                 </div>
@@ -664,7 +664,7 @@
                   <span id="parserStatusText">Ready to parse a job description.</span>
                 </div>
                 <div class="actions parser-meta" style="justify-content:flex-start;">
-                  <button class="btn primary" id="parseAiBtn" type="button">Parse with Gemini</button>
+                  <button class="btn primary" id="parseAiBtn" type="button">Parse with AI</button>
                   <button class="btn" id="addParsedBtn" type="button">Parse + Add Job</button>
                   <button class="btn" id="copyParsedPmBtn" type="button">Parse + Copy PM</button>
                   <button class="btn" id="clearParserBtn" type="button">Clear Input</button>
@@ -1221,6 +1221,11 @@ Rules:
 Pasted content:
 ${text}`;
     }
+    function stripMarkdownFences(text) {
+      const trimmed = String(text || "").trim();
+      const fenceMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+      return fenceMatch ? fenceMatch[1] : trimmed;
+    }
     function fallbackParseJobDescription(text) {
       const jobText = String(text || "");
       const lower = jobText.toLowerCase();
@@ -1308,33 +1313,69 @@ ${text}`;
       };
     }
     async function parseWithGemini(text, apiKey) {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://pacguy-mtk.github.io/applyfollow/",
+          "X-Title": "applyfollow Semantic Parser"
+        },
         body: JSON.stringify({
-          systemInstruction: {
-            parts: [{
-              text: "You are a job description parser. Return a valid JSON object only."
-            }]
-          },
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: buildGeminiPrompt(text) }]
-            }
+          model: "google/gemini-2.0-flash-lite-001:free",
+          messages: [
+            { role: "system", content: "You are a job description parser. Return a valid JSON object only." },
+            { role: "user", content: buildGeminiPrompt(text) }
           ],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: "application/json"
-          }
+          temperature: 0.2
         })
       });
       if (!response.ok) {
-        throw new Error(`Gemini request failed with HTTP ${response.status}`);
+        if (response.status === 429) {
+          setParserStatus("Rate limit exceeded. Waiting 2 seconds and retrying...", "warning", true);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          const retryResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${apiKey}`,
+              "HTTP-Referer": "https://pacguy-mtk.github.io/applyfollow/",
+              "X-Title": "applyfollow Semantic Parser"
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.0-flash-lite-001:free",
+              messages: [
+                { role: "system", content: "You are a job description parser. Return a valid JSON object only." },
+                { role: "user", content: buildGeminiPrompt(text) }
+              ],
+              temperature: 0.2
+            })
+          });
+          if (!retryResponse.ok) {
+            if (retryResponse.status === 402) {
+              setParserStatus("Free quota exhausted. Try again tomorrow or use a paid model.", "error", false);
+            } else {
+              setParserStatus(`OpenRouter error (${retryResponse.status}). Please try again.`, "error", false);
+            }
+            throw new Error(`OpenRouter request failed with HTTP ${retryResponse.status}`);
+          }
+          const retryData = await retryResponse.json();
+          const retryCandidateText = retryData?.choices?.[0]?.message?.content || "";
+          const retryCleaned = stripMarkdownFences(retryCandidateText);
+          const retryParsed = extractJsonObject(retryCleaned) || {};
+          return normalizeSemanticParse(retryParsed, text);
+        }
+        if (response.status === 402) {
+          setParserStatus("Free quota exhausted. Try again tomorrow or use a paid model.", "error", false);
+        } else {
+          setParserStatus(`OpenRouter error (${response.status}). Please try again.`, "error", false);
+        }
+        throw new Error(`OpenRouter request failed with HTTP ${response.status}`);
       }
       const data = await response.json();
-      const candidateText = data?.candidates?.[0]?.content?.parts?.map(part => part.text || "").join("") || data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const parsed = extractJsonObject(candidateText) || extractJsonObject(data?.text) || {};
+      const candidateText = data?.choices?.[0]?.message?.content || "";
+      const cleaned = stripMarkdownFences(candidateText);
+      const parsed = extractJsonObject(cleaned) || {};
       return normalizeSemanticParse(parsed, text);
     }
     function applySemanticParse(parsed, sourceText) {
