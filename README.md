@@ -1,7 +1,7 @@
-[skill_ocrai.md](https://github.com/user-attachments/files/29546896/skill_ocrai.md)
+[skill_ocrai.md](https://github.com/user-attachments/files/30193766/skill_ocrai.md)
 ---
 name: skill-ocrai
-description: OCR + AI extraction for single-file HTML tools that process clean printed screenshots or scans. Use when building or updating HTML apps that need local OCR with Tesseract.js, then structured extraction with OpenRouter text models such as cohere/north-mini-code:free, plus localStorage saving, preview editing, and JSON import/export.
+description: OCR + AI extraction for single-file HTML tools that process clean printed screenshots or scans. Use when building or updating HTML apps that need local OCR with Tesseract.js, then structured extraction with OpenRouter text models such as nvidia/nemotron-3-ultra-550b-a55b:free, plus localStorage saving, preview editing, and JSON import/export.
 ---
 
 # OCR + AI Extractor
@@ -52,7 +52,7 @@ async function extractStructuredData(rawText, apiKey) {
       "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: "cohere/north-mini-code:free",
+      model: "nvidia/nemotron-3-ultra-550b-a55b:free,
       messages: [
         {
           role: "system",
