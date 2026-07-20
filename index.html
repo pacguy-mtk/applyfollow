@@ -1434,7 +1434,7 @@ ${text}`;
       try {
         semantic = apiKey ? await parseWithGemini(text, apiKey) : normalizeSemanticParse(fallbackParseJobDescription(text), text);
         applySemanticParse(semantic, text);
-        setParserStatus(apiKey ? "Quick Add Job filled from Gemini." : "Table parser filled Quick Add Job.", apiKey ? "success" : "warning", false);
+        setParserStatus(apiKey ? "Quick Add Job filled from Nvidia." : "Table parser filled Quick Add Job.", apiKey ? "success" : "warning", false);
       } catch (error) {
         console.error(error);
         semantic = normalizeSemanticParse(fallbackParseJobDescription(text), text);
