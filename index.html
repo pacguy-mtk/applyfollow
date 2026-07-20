@@ -504,7 +504,7 @@
         <div class="mark">ZJ</div>
         <div>
           <h1>applyfollow Semantic Parser</h1>
-          <p class="subtitle">Paste a job description, let OldModel extract structured fields, then save it into your tracker.</p>
+          <p class="subtitle">Paste a job description, let OpenRouter extract structured fields, then save it into your tracker.</p>
         </div>
       </div>
       <div class="actions">
@@ -706,7 +706,7 @@
     const storageKey = "zijun-job-hunt";
     const statusOptions = ["Applied", "No Response", "Replied", "Interview", "Interviewed", "Rejected", "Offer"];
     const platformOptions = ["JobStreet", "LinkedIn", "Indeed", "Facebook", "WhatsApp", "Walk-in", "Friend Intro", "Other"];
-    const geminiModel = "cohere/north-mini-code:free";
+    const geminiModel = "nvidia/nemotron-3-ultra-550b-a55b:free";
     const fixedTemplate = `Help me write job application follow-up content based on this table.
 
 | Field | Fill In |
@@ -1322,7 +1322,7 @@ ${text}`;
           "X-Title": "applyfollow Semantic Parser"
         },
         body: JSON.stringify({
-          model: "cohere/north-mini-code:free",
+          model: "nvidia/nemotron-3-ultra-550b-a55b:free",
           messages: [
             { role: "system", content: "You are a job description parser. Return a valid JSON object only." },
             { role: "user", content: buildGeminiPrompt(text) }
@@ -1343,7 +1343,7 @@ ${text}`;
               "X-Title": "applyfollow Semantic Parser"
             },
             body: JSON.stringify({
-              model: "cohere/north-mini-code:free",
+              model: "nvidia/nemotron-3-ultra-550b-a55b:free",
               messages: [
                 { role: "system", content: "You are a job description parser. Return a valid JSON object only." },
                 { role: "user", content: buildGeminiPrompt(text) }
@@ -1429,7 +1429,7 @@ ${text}`;
 
       const apiKey = geminiApiKeyInput.value.trim();
       let semantic = null;
-      setParserStatus(apiKey ? "Sending the prompt to OldModel..." : "No API key set. Using the table parser to fill Quick Add Job.", apiKey ? "busy" : "warning", apiKey.length > 0);
+      setParserStatus(apiKey ? "Sending the prompt to OpenRouter..." : "No API key set. Using the table parser to fill Quick Add Job.", apiKey ? "busy" : "warning", apiKey.length > 0);
 
       try {
         semantic = apiKey ? await parseWithGemini(text, apiKey) : normalizeSemanticParse(fallbackParseJobDescription(text), text);
