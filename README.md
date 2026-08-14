@@ -1,127 +1,130 @@
-[skill_ocrai.md](https://github.com/user-attachments/files/30193766/skill_ocrai.md)
----
-name: skill-ocrai
-description: OCR + AI extraction for single-file HTML tools that process clean printed screenshots or scans. Use when building or updating HTML apps that need local OCR with Tesseract.js, then structured extraction with OpenRouter text models such as nvidia/nemotron-3-ultra-550b-a55b:free, plus localStorage saving, preview editing, and JSON import/export.
----
+[README.md](https://github.com/user-attachments/files/31061463/README.md)
+# applyfollow Semantic Job Parser
 
-# OCR + AI Extractor
+Job application tracker with AI-powered extraction. Paste a job description, let the AI extract structured fields, then save it into your tracker.
 
-Use this skill for self-contained HTML apps that turn pasted or uploaded screenshots into structured records.
+## Features
 
-## Recommended flow
+- **Semantic Job Parser** — Paste a job description → AI extracts company, position, platform, status, follow-up date, and more
+- **Dual AI Provider** — Groq (`openai/gpt-oss-120b`) first, OpenRouter (`nvidia/nemotron-3-ultra-550b-a55b:free`) as fallback
+- **Fallback Table Parser** — Works without API key using regex-based extraction
+- **Entry Tab** — Full job list with preview/editor modes, sorting, search
+- **Workspace Tab** — Quick Add form + Semantic Parser + recent entries
+- **Follow-up System** — Auto-marks "No Response" when follow-up date passes
+- **Travel Maps** — Paste screenshot from clipboard, compressed to WebP
+- **Import/Export** — JSON backup and restore
+- **Gugu Pet Chatbot** — Penguin assistant for page guidance
 
-1. Accept image input from file picker and clipboard paste.
-2. Compress the image before storing it.
-3. Run OCR locally with Tesseract.js.
-4. Send OCR text to OpenRouter for structured JSON extraction.
-5. Show editable preview fields.
-6. Save records to localStorage.
-7. Support history, view, delete, export, and import.
+## AI Extraction Logic
 
-## When to use
+### Provider Priority
 
-- Clean printed text in bills, receipts, invoices, forms, and screenshots.
-- Single-file HTML deliverables.
-- Users bring their own OpenRouter API key.
-- You want to avoid sending raw images to a vision model.
-
-## When not to use
-
-- Handwriting.
-- Very blurry or distorted images.
-- Real-time extraction under 1 second.
-- Tasks that need a paid vision model instead of OCR.
-
-## Core pattern
-
-Use Tesseract.js as the OCR layer and OpenRouter as the text-extraction layer.
-
-```javascript
-async function extractTextFromImage(image) {
-  const result = await Tesseract.recognize(image, "eng", {
-    logger: (m) => console.log(m)
-  });
-  return result.data.text;
-}
-
-async function extractStructuredData(rawText, apiKey) {
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: "nvidia/nemotron-3-ultra-550b-a55b:free,
-      messages: [
-        {
-          role: "system",
-          content: "Extract structured fields from OCR text and return ONLY valid JSON."
-        },
-        {
-          role: "user",
-          content: `OCR text: ${rawText}`
-        }
-      ]
-    })
-  });
-
-  const data = await response.json();
-  return JSON.parse(data.choices[0].message.content);
-}
+```
+1. Groq (openai/gpt-oss-120b) — fast, free tier
+2. OpenRouter (nvidia/nemotron-3-ultra-550b-a55b:free) — fallback
+3. Local table parser — no API key needed
 ```
 
-## Image compression
+### Extracted Fields
 
-Compress images before saving them to `localStorage`.
+| Field | Description |
+|-------|-------------|
+| `appliedDate` | Application date (YYYY-MM-DD) |
+| `company` | Company name |
+| `position` | Job title |
+| `platform` | JobStreet, LinkedIn, Indeed, etc. |
+| `status` | Applied, No Response, Replied, Interview, etc. |
+| `followDate` | Follow-up date (auto-set to +3 working days) |
+| `whatsapp` | Questions to ask before interview |
+| `followupPm` | Follow-up message template |
+| `interviewAsk` | Interview questions to ask |
+| `response` | HR response / notes |
+| `travelNote` | Commute / travel notes |
 
-```javascript
-function compressImage(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const maxWidth = 800;
-        const scale = Math.min(1, maxWidth / img.width);
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.7));
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
+### How It Works
+
+1. User pastes job description into textarea
+2. API key detection:
+   - Has key → Send to Groq first, OpenRouter if Groq fails
+   - No key → Use local table parser (regex-based)
+3. AI returns JSON with extracted fields
+4. Fields auto-fill the Quick Add Job form
+5. User reviews and clicks "Add Job"
+
+## Setup
+
+### GitHub Secrets
+
+Add to your repo Settings → Secrets → Actions:
+
+- `GROQ_API_KEY` — Get from [console.groq.com](https://console.groq.com)
+- `OPENROUTER_API_KEY` — Get from [openrouter.ai](https://openrouter.ai)
+
+### build.yml
+
+```yaml
+name: Build HTML with API Key
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Inject API keys into index.html
+        run: |
+          sed -i "s|__GROQ_API_KEY__|${{ secrets.GROQ_API_KEY }}|g" index.html
+          sed -i "s|__OPENROUTER_API_KEY__|${{ secrets.OPENROUTER_API_KEY }}|g" index.html
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 ```
 
-## Prompting
+## API Key Handling
 
-Keep the system prompt strict and JSON-only.
+- Keys stored in `localStorage` (never sent to server)
+- User can paste their own key in the parser toolbar
+- Build.yml injects keys at deploy time via `sed`
+- Placeholders: `__GROQ_API_KEY__`, `__OPENROUTER_API_KEY__`
 
-```text
-You are a bill extractor. Return ONLY valid JSON.
-If a field is missing, use null.
-Use normalized dates in YYYY-MM-DD when possible.
-```
+## Local Development
 
-## Troubleshooting
+Just open `index.html` in a browser. No build step needed.
 
-- If OCR text is garbled, check image quality and orientation.
-- If OpenRouter returns invalid JSON, tighten the system prompt and truncate overly long OCR text.
-- If extraction feels slow, reduce image size before OCR.
+- Without API key: fallback table parser works
+- With API key: paste in the Semantic Parser toolbar
 
-## Output expectations
+## Tech
 
-Prefer a single HTML file with:
+- Single HTML file, no dependencies
+- localStorage for persistence
+- Groq + OpenRouter for AI
+- Compressed WebP for travel images
+- Gugu pet sprite (optional)
 
-- image input
-- OCR button
-- editable preview
-- save to localStorage
-- history list
-- screenshot viewer
-- JSON import/export
+## License
+
+Personal project by ZiJun Looi.
