@@ -1,5 +1,4 @@
 name: Build HTML with API Key
-
 on:
   push:
     branches: [main]
@@ -17,23 +16,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Debug - Check secret exists
+      - name: Inject API keys into index.html
         run: |
-          if [ -z "${{ secrets.OPENROUTER_API_KEY }}" ]; then
-            echo "SECRET IS EMPTY OR MISSING"
-            echo "Go to Settings > Secrets > Actions and add OPENROUTER_API_KEY"
-            exit 1
-          else
-            echo "SECRET FOUND (length: ${#OPENROUTER_API_KEY} chars)"
-          fi
-        env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-
-      - name: Inject API key into index.html
-        run: |
-          sed -i "s|__API_KEY__|${{ secrets.OPENROUTER_API_KEY }}|g" index.html
-          echo "Placeholder replaced. Checking result..."
-          grep -o "HUB_AI_API_KEY = \".*\"" index.html | head -c 30
+          sed -i "s|__GROQ_API_KEY__|${{ secrets.GROQ_API_KEY }}|g" index.html
+          sed -i "s|__OPENROUTER_API_KEY__|${{ secrets.OPENROUTER_API_KEY }}|g" index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
