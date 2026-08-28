@@ -861,7 +861,7 @@
         <div class="mark">ZJ</div>
         <div>
           <h1>applyfollow Semantic Parser</h1>
-          <p class="subtitle">Paste a job description, let OpenRouter extract structured fields, then save it into your tracker.</p>
+          <p class="subtitle">Paste a job description, let Qwen2.5-VL-72B extract structured fields, then save it into your tracker.</p>
         </div>
       </div>
       <div class="actions">
@@ -1006,14 +1006,20 @@
             <section class="card">
               <div class="panel-head">
                 <h2>Semantic Job Parser</h2>
-                <p>Paste a job description. OpenRouter fills the Quick Add Job fields directly, then keeps any extra extracted details behind the scenes.</p>
+                <p>Paste a job description. Qwen2.5-VL fills the Quick Add Job fields directly, then keeps any extra extracted details behind the scenes.</p>
               </div>
               <div class="stack parser-toolbar">
                 <div class="api-key-row">
-                  <label>OpenRouter API Key
-                    <input id="geminiApiKey" type="password" placeholder="sk-or-v1-..." autocomplete="off">
+                  <label>Groq API Key
+                    <input id="groqApiKey" type="password" placeholder="gsk_..." autocomplete="off">
                   </label>
-                  <small>Paste your OpenRouter key here. It stays in the browser and is never hard-coded into the page.</small>
+                  <small>Paste your Groq key here. Used as fallback for openai/gpt-oss-120b. Stays in browser only.</small>
+                </div>
+                <div class="api-key-row">
+                  <label>OpenRouter API Key
+                    <input id="openrouterApiKey" type="password" placeholder="sk-or-v1-..." autocomplete="off">
+                  </label>
+                  <small>Paste your OpenRouter key here. Used for Qwen2.5-VL-72B-Instruct. Stays in browser only.</small>
                 </div>
                 <textarea id="aiOutput" style="min-height:180px;" placeholder="Paste full job description here..."></textarea>
                 <div class="parser-status" id="parserStatus" data-tone="idle">
@@ -1063,7 +1069,7 @@
     const storageKey = "zijun-job-hunt";
     const statusOptions = ["Applied", "No Response", "Replied", "Interview", "Interviewed", "Rejected", "Offer"];
     const platformOptions = ["JobStreet", "LinkedIn", "Indeed", "Facebook", "WhatsApp", "Walk-in", "Friend Intro", "Other"];
-    const geminiModel = "nvidia/nemotron-3-ultra-550b-a55b:free";
+    const geminiModel = "qwen/qwen-2.5-vl-72b-instruct";
     const fixedTemplate = `Help me write job application follow-up content based on this table.
 
 | Field | Fill In |
@@ -1096,7 +1102,8 @@ Looi Jia Jun`;
     const parserStatus = document.getElementById("parserStatus");
     const parserStatusText = document.getElementById("parserStatusText");
     const parserSpinner = document.getElementById("parserSpinner");
-    const geminiApiKeyInput = document.getElementById("geminiApiKey");
+    const groqApiKeyInput = document.getElementById("groqApiKey");
+    const openrouterApiKeyInput = document.getElementById("openrouterApiKey");
     const settingsKey = "zijun-job-hunt-settings";
     let jobs = JSON.parse(localStorage.getItem(storageKey) || "[]").map(normalizeJob);
     let entryMode = "preview";
@@ -1105,7 +1112,8 @@ Looi Jia Jun`;
     let followFocusIndex = -1;
     let settings = loadSettings();
 
-    geminiApiKeyInput.value = settings.geminiApiKey || "";
+    groqApiKeyInput.value = settings.groqApiKey || "";
+    openrouterApiKeyInput.value = settings.openrouterApiKey || "";
 
     setDefaultDates();
     document.getElementById("copyBox").textContent = fixedTemplate;
@@ -1145,8 +1153,12 @@ Looi Jia Jun`;
       await navigator.clipboard.writeText(fixedTemplate);
       flashButton("copyTemplateBtn", "Copied");
     });
-    geminiApiKeyInput.addEventListener("input", () => {
-      settings.geminiApiKey = geminiApiKeyInput.value.trim();
+    groqApiKeyInput.addEventListener("input", () => {
+      settings.groqApiKey = groqApiKeyInput.value.trim();
+      saveSettings();
+    });
+    openrouterApiKeyInput.addEventListener("input", () => {
+      settings.openrouterApiKey = openrouterApiKeyInput.value.trim();
       saveSettings();
     });
     document.getElementById("parseAiBtn").addEventListener("click", () => parseAiOutput(false));
@@ -1271,6 +1283,12 @@ Looi Jia Jun`;
         location: job.location || "",
         jobType: job.jobType || job.job_type || "",
         salary: job.salary || "",
+        commuteRisk: job.commuteRisk || "",
+        scopeRisk: job.scopeRisk || "",
+        companyBackgroundRisk: job.companyBackgroundRisk || "",
+        portfolioIdentityRisk: job.portfolioIdentityRisk || "",
+        matchScore: job.matchScore || "",
+        verdict: job.verdict || "",
         responsibilities: normalizeList(job.responsibilities || job.responsibility || ""),
         requirements: normalizeList(job.requirements || ""),
         benefits: normalizeList(job.benefits || ""),
@@ -1547,12 +1565,15 @@ Looi Jia Jun`;
       const boldPattern = new RegExp(`\\|\\s*\\*\\*${escaped}\\*\\*\\s*\\|\\s*([^|]+?)\\s*\\|`, "i");
       const plainPattern = new RegExp(`\\|\\s*${escaped}\\s*\\|\\s*([^|]+?)\\s*\\|`, "i");
       const colonPattern = new RegExp(`${escaped}\\s*:\\s*(.+)`, "i");
-      return (String(text || "").match(boldPattern)?.[1] || String(text || "").match(plainPattern)?.[1] || String(text || "").match(colonPattern)?.[1] || "").trim();
+      const pipeNoSpacePattern = new RegExp(`\\|\\s*${escaped}\\s*\\|([^|]+?)\\|`, "i");
+      return (String(text || "").match(boldPattern)?.[1] || String(text || "").match(plainPattern)?.[1] || String(text || "").match(pipeNoSpacePattern)?.[1] || String(text || "").match(colonPattern)?.[1] || "").trim();
     }
     function buildGeminiPrompt(text) {
-      return `You are a job application parser. Extract the information from the pasted content and return a valid JSON object ONLY. Do not add any extra text.
+      return `You are a job application parser. Read the pasted content CAREFULLY and EXTRACT information with HIGH ACCURACY. Return a valid JSON object ONLY. Do not add any extra text, explanations, or markdown.
 
-Prefer the table under "Job Application Follow-Up Tracker & Content" when present.
+CRITICAL: Read every line of the input text thoroughly before extracting. Pay close attention to table structures, section headings, and labeled fields. Do not miss any data that appears in the text.
+
+Prefer the table under "Job Application Follow-Up Tracker & Content" or "Follow-up Content Table" when present.
 
 Return these keys:
 - appliedDate: string or null
@@ -1566,14 +1587,26 @@ Return these keys:
 - interviewAsk: string or null
 - response: string or null
 - travelNote: string or null
+- location: string or null
+- salary: string or null
+- commuteRisk: string or null
+- scopeRisk: string or null
+- companyBackgroundRisk: string or null
+- portfolioIdentityRisk: string or null
+- matchScore: string or null
+- verdict: string or null
 
-Rules:
-- Normalize dates to YYYY-MM-DD when possible.
-- Normalize status to one of: Applied, No Response, Replied, Interview, Interviewed, Rejected, Offer.
-- If a field is not present, use null.
-- If the content includes "Questions to ask before interview", put that text in whatsapp.
-- If it includes "Short Application Message" or a follow-up message, put that text in followupPm.
-- If it includes "Interview questions I should ask", put that text in interviewAsk.
+RULES:
+1. Normalize dates to YYYY-MM-DD when possible.
+2. Normalize status to one of: Applied, No Response, Replied, Interview, Interviewed, Rejected, Offer.
+3. If a field is not present, use null.
+4. For "whatsapp": Extract the FULL text under "Questions to ask before interview" OR "Questions To Ask HR". Include all numbered questions.
+5. For "followupPm": Extract the FULL text under "Short Application Message" OR "Follow-up PM" section. Include the complete message with greeting, body, and sign-off.
+6. For "interviewAsk": Extract the FULL text under "Interview questions I should ask". Include all numbered questions.
+7. For "travelNote": Extract the FULL text under "Commute Risk" section including distance details, transport info, and any risk assessment.
+8. For "salary": Extract salary information from "Salary Recommendation" or any salary-related text.
+9. For "location": Extract the location/company details from the text.
+10. For matchScore, verdict, commuteRisk, scopeRisk, companyBackgroundRisk, portfolioIdentityRisk: extract the exact values shown in the text.
 
 Pasted content:
 ${text}`;
@@ -1588,7 +1621,8 @@ ${text}`;
       const lower = jobText.toLowerCase();
       const appliedDate = parseDateFromText(getTableValue(jobText, "Applied date"));
       const company = getTableValue(jobText, "Company") || firstMatch(jobText, [
-        /(?:company|employer|organization|organization name)\s*:\s*([^\n]+)/i
+        /(?:company|employer|organization|organization name)\s*:\s*([^\n]+)/i,
+        /(?:Company)\s*:\s*([^\n]+)/i
       ]);
       const position = getTableValue(jobText, "Position") || firstMatch(jobText, [
         /(?:position|title|role)\s*:\s*([^\n]+)/i,
@@ -1597,23 +1631,25 @@ ${text}`;
       const platform = getTableValue(jobText, "Platform") || firstMatch(jobText, [
         /\b(JobStreet|LinkedIn|Indeed|Facebook|WhatsApp|Walk-in|Friend Intro|Other)\b/i
       ]);
-      const status = getTableValue(jobText, "Current status") || firstMatch(jobText, [
-        /\b(Applied|No Response|Replied|Interview|Interviewed|Rejected|Offer|Interview Scheduled)\b/i
+      const status = getTableValue(jobText, "Current status") || getTableValue(jobText, "Verdict") || firstMatch(jobText, [
+        /\b(Applied|No Response|Replied|Interview|Interviewed|Rejected|Offer|Interview Scheduled|Strong Apply)\b/i
       ]);
       const followDate = parseDateFromText(getTableValue(jobText, "Follow Up Date") || getTableValue(jobText, "Follow-up Date"));
       const whatsapp = cleanSection(findSection(jobText, [
-        "Questions To Ask Before Interview",
         "Questions to ask before interview",
+        "Questions To Ask Before Interview",
+        "Questions To Ask HR",
         "Questions Before Interview",
         "Before Interview",
         "Pre-Interview"
       ]));
       const followupPm = cleanSection(findSection(jobText, [
-        "Short Application Message",
         "Follow-up PM",
         "Follow Up PM",
         "Follow-up Message",
         "Follow Up Message",
+        "Follow-up Content Table",
+        "Short Application Message",
         "Follow-up"
       ]));
       const interviewAsk = cleanSection(findSection(jobText, [
@@ -1634,6 +1670,23 @@ ${text}`;
         "Commute",
         "Location / Commute"
       ]));
+      const salary = cleanSection(findSection(jobText, [
+        "Salary Recommendation",
+        "Salary Range",
+        "Salary",
+        "Salary Package"
+      ]));
+      const location = firstMatch(jobText, [
+        /(?:location|office|address)\s*:\s*([^\n]+)/i,
+        /(?:Location)\s*:\s*([^\n]+)/i
+      ]);
+      const matchScore = firstMatch(jobText, [
+        /Match Score\s*:\s*(\d+\/\d+)/i,
+        /Match\s*:\s*(\d+\/\d+)/i
+      ]);
+      const verdict = firstMatch(jobText, [
+        /Verdict\s*:\s*([^\n]+)/i
+      ]);
       return {
         appliedDate,
         company,
@@ -1645,7 +1698,11 @@ ${text}`;
         followupPm,
         interviewAsk,
         response,
-        travelNote
+        travelNote,
+        salary,
+        location,
+        matchScore,
+        verdict
       };
     }
     function normalizeSemanticParse(raw, sourceText) {
@@ -1666,47 +1723,69 @@ ${text}`;
         interviewAsk: cleanSection(pick(raw?.interviewAsk, fallback.interviewAsk)),
         response: cleanSection(pick(raw?.response, fallback.response)),
         travelNote: cleanSection(pick(raw?.travelNote, fallback.travelNote)),
-        semanticSource: raw?.semanticSource || "gemini"
+        location: pick(raw?.location, fallback.location),
+        salary: pick(raw?.salary, ""),
+        commuteRisk: pick(raw?.commuteRisk, ""),
+        scopeRisk: pick(raw?.scopeRisk, ""),
+        companyBackgroundRisk: pick(raw?.companyBackgroundRisk, ""),
+        portfolioIdentityRisk: pick(raw?.portfolioIdentityRisk, ""),
+        matchScore: pick(raw?.matchScore, ""),
+        verdict: pick(raw?.verdict, ""),
+        semanticSource: raw?.semanticSource || "qwen"
       };
     }
-    async function parseWithAi(text, apiKey) {
-      const providers = [
-        { url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` } },
-        { url: 'https://openrouter.ai/api/v1/chat/completions', model: 'nvidia/nemotron-3-ultra-550b-a55b:free', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`, 'HTTP-Referer': 'https://pacguy-mtk.github.io/applyfollow/', 'X-Title': 'applyfollow Semantic Parser' } }
-      ];
+    async function parseWithAi(text, groqKey, openrouterKey) {
+      const providers = [];
+      if (openrouterKey) {
+        providers.push({ url: 'https://openrouter.ai/api/v1/chat/completions', model: 'qwen/qwen-2.5-vl-72b-instruct', name: 'Qwen2.5-VL', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openrouterKey}`, 'HTTP-Referer': 'https://pacguy-mtk.github.io/applyfollow/', 'X-Title': 'applyfollow Semantic Parser' } });
+      }
+      if (groqKey) {
+        providers.push({ url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b', name: 'GPT-OSS-120B', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` } });
+      }
+
+      if (!providers.length) {
+        throw new Error('No API keys provided');
+      }
 
       for (const srv of providers) {
         try {
+          setParserStatus(`Trying ${srv.name}...`, 'busy', true);
           const response = await fetch(srv.url, {
             method: 'POST',
             headers: srv.headers,
             body: JSON.stringify({
               model: srv.model,
               messages: [
-                { role: 'system', content: 'You are a job description parser. Return a valid JSON object only.' },
+                { role: 'system', content: 'You are a job description parser. Read the text VERY carefully and extract ALL information accurately. Pay attention to every labeled field, table row, and section. Return a valid JSON object only. Do not miss any data.' },
                 { role: 'user', content: buildGeminiPrompt(text) }
               ],
-              temperature: 0.2
+              temperature: 0.1,
+              max_tokens: 4096
             })
           });
           if (!response.ok) {
             if (response.status === 429) {
-              setParserStatus('Rate limit hit. Waiting 2s and trying next provider...', 'warning', true);
-              await new Promise(resolve => setTimeout(resolve, 2000));
+              setParserStatus(`${srv.name} rate limited. Trying next...`, 'warning', true);
+              await new Promise(resolve => setTimeout(resolve, 1500));
               continue;
             }
             if (response.status === 402) {
-              setParserStatus('Free quota exhausted on this provider. Trying next...', 'warning', true);
+              setParserStatus(`${srv.name} quota exhausted. Trying next...`, 'warning', true);
               continue;
             }
+            setParserStatus(`${srv.name} error (${response.status}). Trying next...`, 'warning', true);
             continue;
           }
           const data = await response.json();
           const candidateText = data?.choices?.[0]?.message?.content || '';
           const cleaned = stripMarkdownFences(candidateText);
           const parsed = extractJsonObject(cleaned) || {};
+          setParserStatus(`Parsed by ${srv.name}.`, 'success', false);
           return normalizeSemanticParse(parsed, text);
-        } catch (e) { continue; }
+        } catch (e) {
+          setParserStatus(`${srv.name} failed. Trying next...`, 'warning', true);
+          continue;
+        }
       }
       throw new Error('All providers failed');
     }
@@ -1759,19 +1838,21 @@ ${text}`;
         return null;
       }
 
-      const apiKey = geminiApiKeyInput.value.trim();
+      const groqKey = groqApiKeyInput.value.trim();
+      const openrouterKey = openrouterApiKeyInput.value.trim();
+      const hasAnyKey = groqKey || openrouterKey;
       let semantic = null;
-      setParserStatus(apiKey ? "Sending the prompt to OpenRouter..." : "No API key set. Using the table parser to fill Quick Add Job.", apiKey ? "busy" : "warning", apiKey.length > 0);
+      setParserStatus(hasAnyKey ? "Sending to AI..." : "No API key set. Using the table parser to fill Quick Add Job.", hasAnyKey ? "busy" : "warning", hasAnyKey);
 
       try {
-        semantic = apiKey ? await parseWithAi(text, apiKey) : normalizeSemanticParse(fallbackParseJobDescription(text), text);
+        semantic = hasAnyKey ? await parseWithAi(text, groqKey, openrouterKey) : normalizeSemanticParse(fallbackParseJobDescription(text), text);
         applySemanticParse(semantic, text);
-        setParserStatus(apiKey ? "Quick Add Job filled from Nvidia." : "Table parser filled Quick Add Job.", apiKey ? "success" : "warning", false);
+        setParserStatus(hasAnyKey ? "Quick Add Job filled from AI." : "Table parser filled Quick Add Job.", hasAnyKey ? "success" : "warning", false);
       } catch (error) {
         console.error(error);
         semantic = normalizeSemanticParse(fallbackParseJobDescription(text), text);
         applySemanticParse(semantic, text);
-        setParserStatus("Gemini parse failed, so the table parser filled Quick Add Job.", "warning", false);
+        setParserStatus("AI parse failed, so the table parser filled Quick Add Job.", "warning", false);
       }
 
       if (shouldAdd) {
@@ -1840,7 +1921,7 @@ ${text}`;
       const status = String(value || "").toLowerCase();
       if (status.includes("offer")) return "Offer";
       if (status.includes("reject")) return "Rejected";
-      if (status.includes("applied")) return "Applied";
+      if (status.includes("applied") || status.includes("strong apply")) return "Applied";
       if (status.includes("schedule") || status.includes("scheduled") || status.includes("pending visit")) return "Interview";
       if (status.includes("interviewed")) return "Interviewed";
       if (status.includes("interview")) return "Interview";
